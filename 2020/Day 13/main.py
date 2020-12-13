@@ -50,23 +50,24 @@ def part_two(entries):
         else:
             bus_list.append((int(id_tokens[index]), index))
     
-    timestamp = 0
+    # Get largest id
+    largest_id, offset = sorted(bus_list, key=lambda tup: tup[0], reverse=True)[0]
+
+    timestamp = largest_id
     # Iterate until value found
     while True:
-        print(timestamp)
-
         # If timestamp is valid
-        if part_two_helper(bus_list, timestamp):
-            return timestamp
+        if part_two_helper(bus_list, timestamp - offset):
+            return timestamp - offset
         
         # Increment timestamp value
-        timestamp = timestamp + bus_list[0][0]
+        timestamp = timestamp + largest_id
     
     return None
 
 if __name__ == "__main__":
     # Get input from txt file
-    with open(os.getcwd() + '\\2020\\Day 13\\input.txt', 'r') as file_obj:
+    with open(os.getcwd() + '\\2020\\Day 13\\test.txt', 'r') as file_obj:
         file_input = file_obj.readlines()
     
     # Clean input
