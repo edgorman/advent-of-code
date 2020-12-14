@@ -1,8 +1,3 @@
-"""
---- Day X: Template ---
-Challenge description here
-"""
-
 import os
 
 def part_one(entries):
