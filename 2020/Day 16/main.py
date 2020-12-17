@@ -48,52 +48,53 @@ def part_two(rules, my_ticket, nearby_tickets):
                 break
     valid_tickets.append(my_ticket)
 
-    # Find valid field positions
-    valid_fields = defaultdict(list)
+    # Find valid fields
+    valid_fields = {}
 
-    # For each rule
-    for name, rang in rules.items():
-        lower_min, lower_max = rang[0]
-        upper_min, upper_max = rang[1]
-
-        # For each possible ticket index
-        for ticket_index in range(len(rules)):
+    # For each ticket index
+    for ticket_index in range(len(my_ticket)):
+        fields_list = []
+        # For each rule
+        for field, (lower, upper) in rules.items():
             in_range = True
 
             # For each ticket
             for ticket in valid_tickets:
-                # Get value at ticket index
-                number = ticket[ticket_index]
-
-                # Check number not in range
-                if not(lower_max >= number >= lower_min or upper_max >= number >= upper_min):
+                # Check if value not in bounds
+                if not (lower[1] >= ticket[ticket_index] >= lower[0] or upper[1] >= ticket[ticket_index] >= upper[0]):
                     in_range = False
                     break
             
-            # If ticket index in range for all tickets
+            # If field in range for index
             if in_range:
-                valid_fields[ticket_index].append(name)
+                fields_list.append(field)
 
-    # Find final field positions
-    final_fields = []
-
-    # For each index in order of valid field counts
-    for index in sorted(valid_fields, key=lambda k: len(valid_fields[k])):
-        next_field = [f for f in valid_fields[index] if f not in final_fields][0]
-        final_fields.append(next_field)
+        # Append list of possible fields to valid fields
+        valid_fields[ticket_index] = fields_list
     
-    # Calculate all departure values multiplied
-    departure_mults = 1
+    # Find final fields
+    final_fields = {}
+
+    # For each index of the sorted valid fields
+    for position in sorted(valid_fields, key=lambda f: len(valid_fields[f]), reverse=False):
+        fields = valid_fields[position]
+        # For each field at position
+        for field in fields:
+            # If not in final fields
+            if field not in final_fields.values():
+                final_fields[position] = field
+                break
+    
+    # Multiply all departure values
+    departure_mult = 1
 
     # For each field
-    for index in range(len(final_fields)):
-        # If index is a departure field
-        if "departure" in final_fields[index]:
-            departure_mults = departure_mults * my_ticket[index]
+    for position, name in final_fields.items():
+        # If name contains departure
+        if "departure" in name:
+            departure_mult = departure_mult * my_ticket[position]
     
-    # 5738476634257
-    # 910339449193
-    return departure_mults
+    return departure_mult
 
 if __name__ == "__main__":
     # Get input from txt file
