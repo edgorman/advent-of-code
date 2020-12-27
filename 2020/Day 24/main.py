@@ -1,4 +1,5 @@
 import os
+import copy
 
 def part_one(flip_tiles):
     flipped_tiles = []
@@ -27,10 +28,55 @@ def part_one(flip_tiles):
             # Flip
             flipped_tiles.append(position)
         
-    return len(flipped_tiles)
+    return flipped_tiles
 
-def part_two(entries):
-    pass
+def part_two_helper(tile):
+    return [
+        (tile[0]+1, tile[1], tile[2]-1),    # ne
+        (tile[0]+1, tile[1]-1, tile[2]),    # e
+        (tile[0], tile[1]-1, tile[2]+1),    # se
+        (tile[0]-1, tile[1], tile[2]+1),    # sw
+        (tile[0]-1, tile[1]+1, tile[2]),    # w
+        (tile[0], tile[1]+1, tile[2]-1),    # nw
+    ]
+
+def part_two(flip_tiles):
+    black_tiles = part_one(flip_tiles)
+
+    # Iterate n times
+    for x in range(100):
+        print(x, len(black_tiles))
+        new_black_tiles = copy.deepcopy(black_tiles)
+
+        # Generate list of white tiles
+        white_tiles = set()
+        for tile in black_tiles:
+            for surround in part_two_helper(tile):
+                if surround not in black_tiles:
+                    white_tiles.add(surround)
+
+        # Calculate new white tiles
+        for tile in black_tiles:
+            black_count = 0
+            for surround in part_two_helper(tile):
+                if surround in black_tiles:
+                    black_count = black_count + 1
+            if black_count == 0 or black_count > 2:
+                new_black_tiles.remove(tile)
+        
+        # Calculate new black tiles
+        for tile in white_tiles:
+            black_count = 0
+            for surround in part_two_helper(tile):
+                if surround in black_tiles:
+                    black_count = black_count + 1
+            if black_count == 2:
+                new_black_tiles.append(tile)
+
+        # Set black tiles to the new list
+        black_tiles = new_black_tiles
+
+    return black_tiles
 
 if __name__ == "__main__":
     # Get input from txt file
@@ -66,7 +112,7 @@ if __name__ == "__main__":
         entries.append(directions)
     
     # Part one
-    print(part_one(entries))
+    print(len(part_one(entries)))
 
     # Part two
-    print(part_two(entries))
+    print(len(part_two(entries)))
