@@ -116,7 +116,7 @@ def part_two(rules, messages):
 
 if __name__ == "__main__":
     # Get input from txt file
-    with open(os.getcwd() + '\\2020\\Day 19\\input.txt', 'r') as file_obj:
+    with open(os.getcwd() + '\\2020\\Day 19\\test.txt', 'r') as file_obj:
         file_input = file_obj.readlines()
     
     # Clean input
@@ -141,28 +141,9 @@ if __name__ == "__main__":
     # Part one
     print(part_one(rules, messages))
 
-    # Get input from txt file
-    with open(os.getcwd() + '\\2020\\Day 19\\input2.txt', 'r') as file_obj:
-        file_input = file_obj.readlines()
-    
-    # Clean input
-    rules = {}
-    messages = []
-    for entry in file_input:
-        # If entry is rule
-        if ':' in entry:
-            key = entry[0:entry.index(':')]
-            rules[key] = []
-
-            # For each sub rule
-            for subrule in entry[len(key)+2:].split(' | '):
-                rules[key].append(subrule.rstrip().replace('"', '').split(' '))
-
-        # Else entry is message
-        else:
-            # Ignore empty strings
-            if entry.rstrip() != '':
-                messages.append(entry.rstrip())
+    # Update rules for part two
+    rules['8'] = [['42'], ['42', '8']]
+    rules['11'] = [['42', '31'], ['42', '11', '31']]
 
     # Part two
     print(part_two(rules, messages))
