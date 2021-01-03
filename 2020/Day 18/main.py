@@ -1,4 +1,5 @@
 import os
+from collections import deque
 
 def part_one_parenth_index(equation):
     count = 0
@@ -77,8 +78,42 @@ def part_one(equations):
     # Return sum of values
     return sum(values)
 
-def part_two(entries):
-    pass
+def part_two_helper(equation):
+    multiplier  = 1
+    accumulator = 0
+    
+    # While equation is not empty
+    while len(equation) > 0:
+        # Get leftmost token
+        tok = equation.popleft()
+
+        # If its a digit
+        if tok.isdigit():
+            # Update accumulator using value and multiplier
+            val = int(tok)
+            accumulator += val * multiplier
+        elif tok == '*':
+            # Update multiplier with accumulator
+            multiplier = accumulator
+            accumulator = 0
+        elif tok == '(':
+            # Recurse on equation between parentheses
+            val = part_two_helper(equation)
+            accumulator += val * multiplier
+        elif tok == ')':
+            break
+
+    return accumulator
+
+def part_two(equations):
+    values = []
+
+    # For each equation
+    for equation in equations:
+        values.append(part_two_helper(deque(equation)))
+    
+    # Return sum of values
+    return sum(values)
 
 if __name__ == "__main__":
     # Get input from txt file
@@ -88,11 +123,11 @@ if __name__ == "__main__":
     # Clean input
     entries = []
     for entry in file_input:
-        equation = []
+        tokens = []
         for letter in entry.rstrip():
             if letter != ' ':
-                equation.append(letter)
-        entries.append(equation)
+                tokens.append(letter)
+        entries.append(tokens)
 
     # Part one
     print(part_one(entries))
