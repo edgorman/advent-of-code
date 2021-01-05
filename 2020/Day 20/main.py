@@ -20,29 +20,27 @@ def part_one_helper(side, remove_ids, entries):
 
     return None
 
-def part_one(entries):
+def part_one(tiles):
     corner_ids = []
     directions = ['top', 'right', 'bottom', 'left']
 
     # For each tile
-    for tile_id, tile_contents in entries.items():
-        match_tiles = [tile_id]
+    for tile_id, tile_contents in tiles.items():
+        match_tiles = []
 
         # For each side of tile
         for d in directions:
             # Get matching tile
-            match = part_one_helper(tile_contents[d], match_tiles, entries.copy())
+            match = part_one_helper(tile_contents[d], match_tiles+[tile_id], tiles.copy())
             
             # If found a matching tile
             if match is not None:
                 match_tiles.append(match)
             
             # If number of matching tiles means not a corner
-            if len(match_tiles) > 3:
+            if len(match_tiles) > 2:
                 break
         
-        match_tiles.remove(tile_id)
-
         # If tile is a corner
         if len(match_tiles) == 2:
             corner_ids.append(tile_id)
@@ -58,7 +56,7 @@ def part_two(entries):
 
 if __name__ == "__main__":
     # Get input from txt file
-    with open(os.getcwd() + '\\2020\\Day 20\\input.txt', 'r') as file_obj:
+    with open(os.getcwd() + '\\2020\\Day 20\\test.txt', 'r') as file_obj:
         file_input = file_obj.readlines()
     
     # Clean input
