@@ -1,4 +1,5 @@
 import os
+import re
 import string
 
 def part_one_helper(rules, index):
@@ -46,77 +47,56 @@ def part_two_helper(rules, index):
 
     # If next rule is letter (e.g. a)
     if len(rule) == 1 and not rule[0][0].isdigit():
-        return rule[0][0], []
+        return rule[0][0]
     
-    values_list = []
-    recurs_list = []
+    ret_value = ""
     # For each subrule (e.g. [4, 1, 5])
     for subrule in rule:
-        values = []
-        recurs = []
+        # For each rule (e.g. 4, then 1, then 5)
+        for s in subrule:
+            # Get result
+            result = part_two_helper(rules, s)
+            if "|" in result:
+                result = f"({result})"
+            ret_value += result
+        ret_value += "|"
+    ret_value = ret_value[:-1]
 
-        # Check if recursive rule
-        if index in subrule:
-            # For each rule (e.g. 4, then 1, then 5)
-            for s in subrule:
-                # If s is the recursive rule
-                if s == index:
-                    recurs = [r+"*" for r in recurs]
-                # Else its a normal rule
-                else:
-                    val, _ = part_two_helper(rules, s)
-
-                    if len(values) == 0:
-                        values = val
-                        recurs = val
-                    else:
-                        values = [''.join((a, b)) for a in values for b in val]
-                        recurs = [''.join((a, b)) for a in recurs for b in val]
-        # Else is normal value
-        else:
-            # For each rule (e.g. 4, then 1, then 5)
-            for s in subrule:
-                # Update values with result
-                result, recurs = part_two_helper(rules, s)
-
-                if len(values) == 0:
-                    values = result
-                else:
-                    values = [''.join((a, b)) for a in values for b in result]
-
-        # Append values and recurs to return list
-        values_list.extend(values)
-        recurs_list.extend(recurs)
-    
-    return values_list, recurs_list
-
+    return ret_value
 
 def part_two(rules, messages):
-    start_index = "0"
-    message_count = 0
+    # Find recursive rules
+    # 8 -> 42 | 42 8
+    # 11 -> 42 31 | 41 11 31
 
-    # For each sub rule
-    valid_messages, recurs_messages = part_two_helper(rules, start_index)
+    # Generate rules
+    rule42 = part_two_helper(rules, "42")
+    rule31 = part_two_helper(rules, "31")
+
+    # Generate regex pattern
+    pattern = (
+        f"^({rule42})+"
+        "("
+        f"({rule42}){{1}}({rule31}){{1}}|"
+        f"({rule42}){{2}}({rule31}){{2}}|"
+        f"({rule42}){{3}}({rule31}){{3}}|"
+        f"({rule42}){{4}}({rule31}){{4}}"
+        ")$"
+    )
+    
+    message_count = 0
 
     # For each message
     for message in messages:
-        # If message is valid
-        if message in valid_messages:
+        # If message matches regex
+        if re.match(pattern, message):
             message_count = message_count + 1
-            continue
-        
-        # For each recurs_message:
-        for recurs in recurs_messages:
-            idx = recurs.index('*')
-            if message.startswith(recurs[0:idx]) and message.endswith(recurs[idx+1:]):
-                message_count = message_count + 1
-                break
     
     return message_count
 
 if __name__ == "__main__":
     # Get input from txt file
-    with open(os.getcwd() + '\\2020\\Day 19\\test.txt', 'r') as file_obj:
+    with open(os.getcwd() + '\\2020\\Day 19\\input.txt', 'r') as file_obj:
         file_input = file_obj.readlines()
     
     # Clean input
