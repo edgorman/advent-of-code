@@ -51,8 +51,66 @@ def part_one(tiles):
     
     return math.prod(corner_ids)
 
-def part_two(entries):
-    pass
+def part_two(tiles):
+    # Set up tile grid
+    n = int(math.sqrt(len(tiles)))
+    tile_grid = [[] for _ in range(n)]
+    corner_id = 0
+
+    # Find corner tile
+    directions = ['top', 'right', 'bottom', 'left']
+    for tile_id, tile_contents in tiles.items():
+        match_tiles = []
+        match_directions = []
+
+        # For each side of tile
+        for d in directions:
+            match = part_one_helper(tile_contents[d], match_tiles+[tile_id], tiles.copy())
+            if match is not None:
+                match_tiles.append(match)
+                match_directions.append(d)
+        
+        # If tile is a corner
+        if len(match_tiles) == 2:
+            corner_id = tile_id
+            break
+    
+    # Get matching sides of corner tile
+    corner_tile = {
+        'bottom': tiles[corner_id][match_directions[0]],
+        'right': tiles[corner_id][match_directions[1]]
+    }
+    
+    # Tile grid set up
+    tile_grid[0].append(corner_id)
+    remaining_tiles = list(tiles.keys())
+    remaining_tiles.remove(corner_id)
+
+    # Iterate until all tiles visited
+    while len(remaining_tiles) != 0:
+        valid_tile = True
+        next_tile = remaining_tiles.pop()
+        
+        # Calculate position of next tile
+        tile_n = len(tiles) - len(remaining_tiles)
+        tile_x, tile_y = tile_n % n, math.floor(tile_n / n)
+
+        # If not on top row, check top side of next tile
+        if tile_y >= 1:
+            pass
+
+        # If not on left col, check left side of next tile
+        if tile_x != 0:
+            pass
+
+        # If next tile is valid        
+        if valid_tile:
+            tile_grid[tile_y].append(next_tile)
+        # else next tile not found, add to end of list
+        else:
+            remaining_tiles.append(next_tile)
+
+    return tile_grid
 
 if __name__ == "__main__":
     # Get input from txt file
@@ -60,7 +118,7 @@ if __name__ == "__main__":
         file_input = file_obj.readlines()
     
     # Clean input
-    entries = {}
+    tiles = {}
     tile_id = None
     tile_index = 0
     tile_contents = defaultdict(list)
@@ -88,13 +146,13 @@ if __name__ == "__main__":
             # Else if tile index is at bottom
             elif tile_index == 10:
                 tile_contents['bottom'] = [i for i in range(len(entry.rstrip())) if entry.startswith('#', i)]
-                entries[tile_id] = tile_contents
+                tiles[tile_id] = tile_contents
 
         # Increment tile index
         tile_index = tile_index + 1
     
     # Part one
-    print(part_one(entries))
+    print(part_one(tiles))
 
     # Part two
-    print(part_two(entries))
+    print(part_two(tiles))
