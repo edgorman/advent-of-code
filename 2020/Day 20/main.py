@@ -1,116 +1,172 @@
 import os
 import re
 import math
-from collections import defaultdict
 
-def part_one_helper(side, remove_ids, entries):
-    for remove in remove_ids:
-        entries.pop(remove, None)
+class Tile:
+    def __init__(self, i, c):
+        self.id = int(i)
+        self.contents = c
+        self.length = len(c)
 
-    # Check rotation
-    for tile_id, tile_contents in entries.items():
-        if side in tile_contents.values():
-            return tile_id
+    def __str__(self):
+        return '\n'.join([row for row in self.contents])
+
+    def get_id(self):
+        return self.id
     
-    # Check flipping
-    side = [(9-s) for s in side[::-1]]
-    for tile_id, tile_contents in entries.items():
-        if side in tile_contents.values():
-            return tile_id
-
-    return None
+    def get_length(self):
+        return self.length
+    
+    def get_top(self):
+        return int(self.contents[0].replace('#','1').replace('.','0'), 2)
+    
+    def get_right(self):
+        return int(''.join([row[-1] for row in self.contents]).replace('#','1').replace('.','0'), 2)
+    
+    def get_bottom(self):
+        return int(self.contents[self.length-1].replace('#','1').replace('.','0'), 2)
+    
+    def get_left(self):
+        return int(''.join([row[0] for row in self.contents]).replace('#','1').replace('.','0'), 2)
+    
+    def get_edges(self):
+        return [
+            self.get_top(),
+            self.get_right(),
+            self.get_bottom(),
+            self.get_left()
+        ]
+    
+    def get_all_edges(self):
+        orig = self.get_edges()
+        flip = [int('{:0{l}b}'.format(o, l=self.length)[::-1], 2) for o in orig]
+        return [
+            [orig[0], orig[1], orig[2], orig[3]],   # original
+            [orig[3], orig[0], orig[1], orig[2]],   # 90 deg
+            [orig[2], orig[3], orig[0], orig[1]],   # 180 deg
+            [orig[1], orig[2], orig[3], orig[0]],   # 270 deg
+            [flip[0], flip[1], flip[2], flip[3]],   # flip
+            [flip[3], flip[0], flip[1], flip[2]],   # 90 deg
+            [flip[2], flip[3], flip[0], flip[1]],   # 180 deg
+            [flip[1], flip[2], flip[3], flip[0]],   # 270 deg
+        ]
+    
+    def rotate(self):
+        self.contents = [''.join(list(row)) for row in zip(*self.contents[::-1])]
+    
+    def flip(self):
+        self.contents = [row[::-1] for row in self.contents]
+    
+    def strip_edges(self):
+        return [row[1:self.length-1] for row in self.contents]
 
 def part_one(tiles):
-    corner_ids = []
-    directions = ['top', 'right', 'bottom', 'left']
+    corners = []
 
     # For each tile
-    for tile_id, tile_contents in tiles.items():
-        match_tiles = []
+    for tile in tiles:
+        match_count = 0
 
-        # For each side of tile
-        for d in directions:
-            # Get matching tile
-            match = part_one_helper(tile_contents[d], match_tiles+[tile_id], tiles.copy())
+        # For each edge in tile
+        for edge in tile.get_edges():
+            # Check against all other tiles
+            for other_tile in tiles:
+                # Ignore if tile == other tile
+                if tile.get_id() == other_tile.get_id():
+                    continue
+
+                # For each variation of other
+                for other_edge in other_tile.get_all_edges():
+                    # If edges match
+                    if edge in other_edge:
+                        match_count = match_count + 1
+                        break
+
+        # If tile is a corner
+        if match_count == 2:
+            corners.append(tile)
+    
+    return corners
+
+def part_two(tiles, corners):
+    # Orientate corner tile
+    c = corners[0]
+    
+    # For each orientation
+    for reorientate in [c.rotate, c.rotate, c.rotate, c.flip, c.rotate, c.rotate, c.rotate]:
+        edge1Found = False
+        edge2Found = False
+        edges = c.get_edges()
+
+        # Check against all other tiles
+        for other_tile in tiles:
+            # Ignore if tile == other tile
+            if c.get_id() == other_tile.get_id():
+                continue
+
+            # For each variation of other
+            for other_edge in other_tile.get_all_edges():
+                # If right edge matches left edge
+                if edges[1] == other_edge[3]:
+                    edge1Found = True
+                
+                # If bottom edge matches top edge
+                if edges[2] == other_edge[0]:
+                    edge2Found = True
+
+        # If right and bottom edge are found
+        if edge1Found and edge2Found:
+            break
+        
+        # Reorientate tile
+        reorientate()
+    
+    # Arrange grid
+    size = int(math.sqrt(len(tiles)))
+    grid = [[] for _ in range(size)]
+    grid[0].append(c)
+    index = 1
+
+    # Iterate until all tiles are placed
+    while index != size ** 2:
+        n = tiles.pop(0)
+        tileFound = False
+
+        # For each orientation
+        for reorientate in [n.rotate, n.rotate, n.rotate, n.flip, n.rotate, n.rotate, n.rotate]:
+            # If next tile is on top row
+            if index < size:
+                p = grid[0][index-1]
+                # If left edge matches right edge
+                if n.get_left() == p.get_right():
+                    tileFound = True
+            # Else next tile is on lower row
+            else:
+                p = grid[math.floor(index / size)-1][index % size]
+                # If top edge matches bottom edge
+                if n.get_top() == p.get_bottom():
+                    tileFound = True
             
-            # If found a matching tile
-            if match is not None:
-                match_tiles.append(match)
-            
-            # If number of matching tiles means not a corner
-            if len(match_tiles) > 2:
+            # If next tile is found
+            if tileFound:
                 break
-        
-        # If tile is a corner
-        if len(match_tiles) == 2:
-            corner_ids.append(tile_id)
+            
+            # Reorientate tile
+            reorientate()
 
-        # If all corners found
-        if len(corner_ids) == 4:
-            break
-    
-    return math.prod(corner_ids)
-
-def part_two(tiles):
-    # Set up tile grid
-    n = int(math.sqrt(len(tiles)))
-    tile_grid = [[] for _ in range(n)]
-    corner_id = 0
-
-    # Find corner tile
-    directions = ['top', 'right', 'bottom', 'left']
-    for tile_id, tile_contents in tiles.items():
-        match_tiles = []
-        match_directions = []
-
-        # For each side of tile
-        for d in directions:
-            match = part_one_helper(tile_contents[d], match_tiles+[tile_id], tiles.copy())
-            if match is not None:
-                match_tiles.append(match)
-                match_directions.append(d)
-        
-        # If tile is a corner
-        if len(match_tiles) == 2:
-            corner_id = tile_id
-            break
-    
-    # Get matching sides of corner tile
-    corner_tile = {
-        'bottom': tiles[corner_id][match_directions[0]],
-        'right': tiles[corner_id][match_directions[1]]
-    }
-    
-    # Tile grid set up
-    tile_grid[0].append(corner_id)
-    remaining_tiles = list(tiles.keys())
-    remaining_tiles.remove(corner_id)
-
-    # Iterate until all tiles visited
-    while len(remaining_tiles) != 0:
-        valid_tile = True
-        next_tile = remaining_tiles.pop()
-        
-        # Calculate position of next tile
-        tile_n = len(tiles) - len(remaining_tiles)
-        tile_x, tile_y = tile_n % n, math.floor(tile_n / n)
-
-        # If not on top row, check top side of next tile
-        if tile_y >= 1:
-            pass
-
-        # If not on left col, check left side of next tile
-        if tile_x != 0:
-            pass
-
-        # If next tile is valid        
-        if valid_tile:
-            tile_grid[tile_y].append(next_tile)
-        # else next tile not found, add to end of list
+        # If next tile fits
+        if tileFound:
+            grid[math.floor(index / size)].append(n)
+            index = index + 1
+        # Else
         else:
-            remaining_tiles.append(next_tile)
+            tiles.append(n)
 
-    return tile_grid
+    # Construct grid
+
+    # Count number of sea monsters
+    
+    return None
 
 if __name__ == "__main__":
     # Get input from txt file
@@ -118,41 +174,19 @@ if __name__ == "__main__":
         file_input = file_obj.readlines()
     
     # Clean input
-    tiles = {}
-    tile_id = None
-    tile_index = 0
-    tile_contents = defaultdict(list)
+    tiles = []
     for entry in file_input:
-        # If entry is new  tile
         if entry.rstrip() == "":
-            tile_index = 0
-            continue
-
-        # If tile index is 0
-        if tile_index == 0:
-            tile_id = int(re.findall(r'\d+', entry)[0])
-            tile_contents = defaultdict(list)
-        # Else if tile index is at top
+            tiles.append(Tile(tile_id, tile_contents))
+        elif "Tile" in entry.rstrip():
+            tile_id = re.findall(r'\d+', entry)[0]
+            tile_contents = []
         else:
-            # Left and right
-            if entry.startswith('#'):
-                tile_contents['left'].append(tile_index - 1)
-            if entry.rstrip().endswith('#'):
-                tile_contents['right'].append(tile_index - 1)
-            
-            # If tile index is at top
-            if tile_index == 1:
-                tile_contents['top'] = [i for i in range(len(entry.rstrip())) if entry.startswith('#', i)]
-            # Else if tile index is at bottom
-            elif tile_index == 10:
-                tile_contents['bottom'] = [i for i in range(len(entry.rstrip())) if entry.startswith('#', i)]
-                tiles[tile_id] = tile_contents
-
-        # Increment tile index
-        tile_index = tile_index + 1
+            tile_contents.append(entry.rstrip())
     
     # Part one
-    print(part_one(tiles))
+    corners = part_one(tiles)
+    print(math.prod(c.get_id() for c in corners))
 
     # Part two
-    print(part_two(tiles))
+    print(part_two(tiles, corners))
