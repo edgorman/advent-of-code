@@ -1,14 +1,17 @@
---- Day 19: Monster Messages ---
+# Day 19: Monster Messages
 You land in an airport surrounded by dense forest. As you walk to your high-speed train, the Elves at the Mythical Information Bureau contact you again. They think their satellite has collected an image of a sea monster! Unfortunately, the connection to the satellite is having problems, and many of the messages sent back from the satellite have been corrupted.
 
 They sent you a list of the rules valid messages should obey and a list of received messages they've collected so far (your puzzle input).
 
 The rules for valid messages (the top part of your puzzle input) are numbered and build upon each other. For example:
 
+```
 0: 1 2
 1: "a"
 2: 1 3 | 3 1
 3: "b"
+```
+
 Some rules, like 3: "b", simply match a single character (in this case, b).
 
 The remaining rules list the sub-rules that must be followed; for example, the rule 0: 1 2 means that to match rule 0, the text being checked must match rule 1, and the text after the part that matched rule 1 must then match rule 2.
@@ -19,12 +22,15 @@ Fortunately, there are no loops in the rules, so the list of possible matches wi
 
 Here's a more interesting example:
 
+```
 0: 4 1 5
 1: 2 3 | 3 2
 2: 4 4 | 5 5
 3: 4 5 | 5 4
 4: "a"
 5: "b"
+```
+
 Here, because rule 4 matches a and rule 5 matches b, rule 2 matches two letters that are the same (aa or bb), and rule 3 matches two letters that are different (ab or ba).
 
 Since rule 1 matches rules 2 and 3 once each in either order, it must match two pairs of letters, one pair with matching letters and one pair with different letters. This leaves eight possibilities: aaab, aaba, bbab, bbba, abaa, abbb, baaa, or babb.
@@ -33,12 +39,14 @@ Rule 0, therefore, matches a (rule 4), then any of the eight options from rule 1
 
 The received messages (the bottom part of your puzzle input) need to be checked against the rules so you can determine which are valid and which are corrupted. Including the rules and the messages together, this might look like:
 
+```
 0: 4 1 5
 1: 2 3 | 3 2
 2: 4 4 | 5 5
 3: 4 5 | 5 4
 4: "a"
 5: "b"
+```
 
 ababbb
 bababa
@@ -49,13 +57,16 @@ Your goal is to determine the number of messages that completely match rule 0. I
 
 How many messages completely match rule 0?
 
-Your puzzle answer was 248.
+__Your puzzle answer was 248.__
 
---- Part Two ---
+# Part Two
 As you look over the list of messages, you realize your matching rules aren't quite right. To fix them, completely replace rules 8: 42 and 11: 42 31 with the following:
 
+```
 8: 42 | 42 8
 11: 42 31 | 42 11 31
+```
+
 This small change has a big impact: now, the rules do contain loops, and the list of messages they could hypothetically match is infinite. You'll need to determine how these changes affect which messages are valid.
 
 Fortunately, many of the rules are unaffected by this change; it might help to start by looking at which rules always match the same set of values and how those rules (especially rules 42 and 31) are used by the new versions of rules 8 and 11.
@@ -64,6 +75,7 @@ Fortunately, many of the rules are unaffected by this change; it might help to s
 
 For example:
 
+```
 42: 9 14 | 10 1
 9: 14 27 | 1 26
 10: 23 14 | 28 1
@@ -111,10 +123,13 @@ aaaabbaaaabbaaa
 aaaabbaabbaaaaaaabbbabbbaaabbaabaaa
 babaaabbbaaabaababbaabababaaab
 aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba
+```
+
 Without updating rules 8 and 11, these rules only match three messages: bbabbbbaabaabba, ababaaaaaabaaab, and ababaaaaabbbaba.
 
 However, after updating rules 8 and 11, a total of 12 messages match:
 
+```
 bbabbbbaabaabba
 babbbbaabbbbbabbbbbbaabaaabaaa
 aaabbbbbbaaaabaababaabababbabaaabbababababaaa
@@ -127,6 +142,10 @@ abbbbabbbbaaaababbbbbbaaaababb
 aaaaabbaabaaaaababaa
 aaaabbaabbaaaaaaabbbabbbaaabbaabaaa
 aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba
+```
+
 After updating rules 8 and 11, how many messages completely match rule 0?
 
-Your puzzle answer was 381.
+__Your puzzle answer was 381.__
+
+__Both parts of this puzzle are complete! They provide two gold stars: **__
