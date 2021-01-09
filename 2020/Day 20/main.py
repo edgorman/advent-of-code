@@ -29,6 +29,9 @@ class Tile:
     def get_left(self):
         return int(''.join([row[0] for row in self.contents]).replace('#','1').replace('.','0'), 2)
     
+    def get_nth_row(self, n):
+        return self.contents[n]
+    
     def get_edges(self):
         return [
             self.get_top(),
@@ -59,6 +62,46 @@ class Tile:
     
     def strip_edges(self):
         return [row[1:self.length-1] for row in self.contents]
+    
+    def find_monsters(self):
+        """ Monster:
+                              # 
+            #    ##    ##    ###
+             #  #  #  #  #  #   
+        """
+        count = 0
+
+        for y in range(1, self.length-1):
+            for x in range(self.length-19):
+                if self.contents[y-1][x+18] == '.': continue
+
+                if self.contents[y][x] == '.': continue
+                if self.contents[y][x+5] == '.': continue
+                if self.contents[y][x+6] == '.': continue
+                if self.contents[y][x+11] == '.': continue
+                if self.contents[y][x+12] == '.': continue
+                if self.contents[y][x+17] == '.': continue
+                if self.contents[y][x+18] == '.': continue
+                if self.contents[y][x+19] == '.': continue
+
+                if self.contents[y+1][x+1] == '.': continue
+                if self.contents[y+1][x+4] == '.': continue
+                if self.contents[y+1][x+7] == '.': continue
+                if self.contents[y+1][x+10] == '.': continue
+                if self.contents[y+1][x+13] == '.': continue
+                if self.contents[y+1][x+16] == '.': continue
+
+                count = count + 1
+        
+        return count
+    
+    def get_rough_water(self):
+        count = 0
+
+        for y in range(self.length):
+            count = count + self.contents[y].count('#')
+        
+        return count
 
 def part_one(tiles):
     corners = []
@@ -121,6 +164,13 @@ def part_two(tiles, corners):
         # Reorientate tile
         reorientate()
     
+    # TODO: corner orientation matters alot, to generate solution requires extra rotations
+    # input.txt -> c.flip()
+    # test.txt -> c.rotate() and c.flip()
+    # Uncomment as needed below:
+    # c.rotate()
+    c.flip()
+    
     # Arrange grid
     size = int(math.sqrt(len(tiles)))
     grid = [[] for _ in range(size)]
@@ -130,21 +180,31 @@ def part_two(tiles, corners):
     # Iterate until all tiles are placed
     while index != size ** 2:
         n = tiles.pop(0)
+        x = index % size
+        y = math.floor(index / size)
         tileFound = False
 
         # For each orientation
         for reorientate in [n.rotate, n.rotate, n.rotate, n.flip, n.rotate, n.rotate, n.rotate]:
-            # If next tile is on top row
-            if index < size:
-                p = grid[0][index-1]
-                # If left edge matches right edge
-                if n.get_left() == p.get_right():
+            # If can check top and left
+            if x > 0 and y > 0:
+                t = grid[y-1][x]
+                l = grid[y][x-1]
+
+                # Check edges match
+                if n.get_top() == t.get_bottom() and n.get_left() == l.get_right():
                     tileFound = True
-            # Else next tile is on lower row
-            else:
-                p = grid[math.floor(index / size)-1][index % size]
-                # If top edge matches bottom edge
-                if n.get_top() == p.get_bottom():
+            # Else if can check top
+            elif y > 0:
+                t = grid[y-1][x]
+                # Check edges match
+                if n.get_top() == t.get_bottom():
+                    tileFound = True
+            # Else if can check left
+            elif x > 0:
+                l = grid[y][x-1]
+                # Check edges match
+                if n.get_left() == l.get_right():
                     tileFound = True
             
             # If next tile is found
@@ -156,21 +216,42 @@ def part_two(tiles, corners):
 
         # If next tile fits
         if tileFound:
-            grid[math.floor(index / size)].append(n)
+            grid[y].append(n)
             index = index + 1
         # Else
         else:
             tiles.append(n)
 
-    # Construct grid
+    # Construct image
+    image = ""
+
+    # For each row of ids
+    for row in grid:
+        # For each inner row
+        for i in range(1, row[0].get_length()-1):
+            # For each tile in row
+            for tile in row:
+                image = image + tile.get_nth_row(i)[1:-1]
+            image = image + "\n"
+    
+    image = image[:-1]
+    o = Tile("1", image.split("\n"))
 
     # Count number of sea monsters
+    monster_count = 0
+    for reorientate in [o.rotate, o.rotate, o.rotate, o.flip, o.rotate, o.rotate, o.rotate]:
+        # Find monsters
+        monster_count = monster_count + o.find_monsters()
+
+        # Reorientate
+        reorientate()
     
-    return None
+    # Return number of rough monsters that aren't monsters
+    return o.get_rough_water() - (monster_count * 15)
 
 if __name__ == "__main__":
     # Get input from txt file
-    with open(os.getcwd() + '\\2020\\Day 20\\test.txt', 'r') as file_obj:
+    with open(os.getcwd() + '\\2020\\Day 20\\input.txt', 'r') as file_obj:
         file_input = file_obj.readlines()
     
     # Clean input
