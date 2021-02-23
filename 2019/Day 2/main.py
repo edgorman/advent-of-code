@@ -1,12 +1,12 @@
 import os
 from copy import deepcopy
 
-def part_one(intcode):
+def part_one(intcode, noun, verb):
     index = 0
 
     # Modify intcode
-    intcode[1] = 12
-    intcode[2] = 2
+    intcode[1] = noun
+    intcode[2] = verb
 
     # Define custom op code functions
     def add(a, b):
@@ -38,8 +38,19 @@ def part_one(intcode):
 
     return intcode[0]
 
-def part_two(entries):
-    pass
+def part_two(entries, value):
+    # For each combination of noun and verb
+    for noun in range(1, 100):
+        for verb in range(1, 100):
+            # Calculate result of execution
+            result = part_one(deepcopy(entries), noun, verb)
+
+            # Check if result equals value
+            if result == value:
+                return (100 * noun) + verb
+    
+    # Couldn't find number
+    return 0
 
 if __name__ == "__main__":
     # Get input from txt file
@@ -53,7 +64,7 @@ if __name__ == "__main__":
             entries.append(int(number))
     
     # Part one
-    print(part_one(deepcopy(entries)))
+    print(part_one(deepcopy(entries), 12, 2))
 
     # Part two
-    print(part_two(deepcopy(entries)))
+    print(part_two(deepcopy(entries), 19690720))
