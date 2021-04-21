@@ -12,6 +12,10 @@ def part_one(entries):
                 for d in range(c, 10):
                     for e in range(d, 10):
                         for f in range(e, 10):
+                            # Check for no adjacent digits
+                            if not (a == b or b == c or c == d or d == e or e == f):
+                                continue
+
                             # Get next value
                             value = int(str(a) + str(b) + str(c) + str(d) + str(e) + str(f))
 
@@ -23,17 +27,47 @@ def part_one(entries):
                             if value < lower:
                                 continue
                                 
-                            # Check for no adjacent digits
-                            if not (a == b or b == c or c == d or d == e or e == f):
-                                continue
-                            
                             password_count += 1
                                 
     # Return number of possible passwords
     return password_count
 
 def part_two(entries):
-    pass
+    password_count = 0
+    lower = int(entries[0])
+    upper = int(entries[1])
+
+    # For each possible digit
+    for a in range(int(entries[0][0]), 10):
+        for b in range(a, 10):
+            for c in range(b, 10):
+                for d in range(c, 10):
+                    for e in range(d, 10):
+                        for f in range(e, 10):
+                            # Check for no double adjacent digits
+                            if not ((a == b and b != c) or \
+                                    (b == c and c != d) or \
+                                    (c == d and d != e) or \
+                                    (d == e and e != f) or \
+                                    (e == f and d != e)):
+                                continue
+                            
+                            # Get next value
+                            value = int(str(a) + str(b) + str(c) + str(d) + str(e) + str(f))
+
+                            # Check value is above range
+                            if value > upper:
+                                return password_count
+                            
+                            # Check value is below range
+                            if value < lower:
+                                continue
+                            
+                            print(value)
+                            password_count += 1
+                                
+    # Return number of possible passwords
+    return password_count
 
 if __name__ == "__main__":
     # Get input from txt file
