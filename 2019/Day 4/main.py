@@ -44,16 +44,14 @@ def part_two(entries):
                 for d in range(c, 10):
                     for e in range(d, 10):
                         for f in range(e, 10):
+                            digits = [a, b, c, d, e, f]
+
                             # Check for no double adjacent digits
-                            if not ((a == b and b != c) or \
-                                    (b == c and c != d) or \
-                                    (c == d and d != e) or \
-                                    (d == e and e != f) or \
-                                    (e == f and d != e)):
+                            if 2 not in [digits.count(d) for d in digits]:
                                 continue
                             
                             # Get next value
-                            value = int(str(a) + str(b) + str(c) + str(d) + str(e) + str(f))
+                            value = int(''.join(map(str, digits)))
 
                             # Check value is above range
                             if value > upper:
