@@ -25,7 +25,7 @@ def part_one(players):
         winning_cards = players[1]
     
     # Calculate winning players score
-    score = sum((c*m) for c, m in zip(winning_cards, range(len(winning_cards), 0, -1)))
+    score = sum([a * b for a, b in enumerate(winning_cards[::-1], 1)]) 
     return score
 
 def part_two_helper(players, seen_before):
@@ -84,7 +84,7 @@ def part_two(players):
         winning_cards = result[0]
     
     # Calculate winning players score
-    score = sum((c*m) for c, m in zip(winning_cards, range(len(winning_cards), 0, -1)))
+    score = sum([a * b for a, b in enumerate(winning_cards[::-1], 1)]) 
     return score
 
 if __name__ == "__main__":
