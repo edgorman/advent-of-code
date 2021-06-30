@@ -53,7 +53,7 @@ class IntCode:
                     self.store(input_.pop(0), self.intcode[self.index + 1])
                     self.index += 2
                 else:
-                    raise Exception("Unknown op code")
+                    raise Exception("No input for storage")
             # Output
             elif opcode == 4:
                 self.output_ = self.output(self.intcode[self.index + 1])
