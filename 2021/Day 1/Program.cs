@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-
+﻿
 namespace AdventOfCode2021
 {
     class Program
