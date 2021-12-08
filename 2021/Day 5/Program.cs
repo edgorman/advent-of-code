@@ -1,5 +1,4 @@
-﻿using System.Text.RegularExpressions;
-
+﻿
 namespace AdventOfCode2021
 {
     class Program
@@ -132,7 +131,7 @@ namespace AdventOfCode2021
             // For each line in input
             for (int i = 0; i < input.Length - 1; i++)
             {
-                Console.WriteLine(i);
+                Console.WriteLine(i + "/" + (input.Length - 1).ToString());
                 Tuple<int, int>[] aCoords = calculateCoords(input[i]);
 
                 // Compare against every following line
