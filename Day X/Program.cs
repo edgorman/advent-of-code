@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-
+﻿
 namespace AdventOfCode2021
 {
     class Program
@@ -7,7 +6,7 @@ namespace AdventOfCode2021
         static void Main(string[] args)
         {
             // Get input from txt file
-            string[] lines = System.IO.File.ReadAllLines("input.txt");
+            string[] lines = System.IO.File.ReadAllLines("test.txt");
 
             // Clean input
             int[] input = new int[lines.Length];
