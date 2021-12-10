@@ -25,6 +25,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Day 1 - CPP", "Day 1\Day 1 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Day 2 - CPP", "Day 2\Day 2 - CPP\Day 2 - CPP.vcxproj", "{423F4CC6-823A-42CD-845B-ABA51F141A89}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Day 10 - CS", "Day 10\Day 10 - CS\Day 10 - CS.csproj", "{204816B0-C1C3-4157-817D-5376B8803492}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -167,6 +169,18 @@ Global
 		{423F4CC6-823A-42CD-845B-ABA51F141A89}.Release|x64.Build.0 = Release|x64
 		{423F4CC6-823A-42CD-845B-ABA51F141A89}.Release|x86.ActiveCfg = Release|Win32
 		{423F4CC6-823A-42CD-845B-ABA51F141A89}.Release|x86.Build.0 = Release|Win32
+		{204816B0-C1C3-4157-817D-5376B8803492}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{204816B0-C1C3-4157-817D-5376B8803492}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{204816B0-C1C3-4157-817D-5376B8803492}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{204816B0-C1C3-4157-817D-5376B8803492}.Debug|x64.Build.0 = Debug|Any CPU
+		{204816B0-C1C3-4157-817D-5376B8803492}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{204816B0-C1C3-4157-817D-5376B8803492}.Debug|x86.Build.0 = Debug|Any CPU
+		{204816B0-C1C3-4157-817D-5376B8803492}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{204816B0-C1C3-4157-817D-5376B8803492}.Release|Any CPU.Build.0 = Release|Any CPU
+		{204816B0-C1C3-4157-817D-5376B8803492}.Release|x64.ActiveCfg = Release|Any CPU
+		{204816B0-C1C3-4157-817D-5376B8803492}.Release|x64.Build.0 = Release|Any CPU
+		{204816B0-C1C3-4157-817D-5376B8803492}.Release|x86.ActiveCfg = Release|Any CPU
+		{204816B0-C1C3-4157-817D-5376B8803492}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
