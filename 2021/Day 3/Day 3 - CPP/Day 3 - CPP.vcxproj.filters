@@ -18,7 +18,7 @@
     <ClCompile Include="Program.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\C++ Library\Split.cpp">
+    <ClCompile Include="..\..\C++ Library\Conversion.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -27,7 +27,7 @@
     <Text Include="test.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\C++ Library\Split.h">
+    <ClInclude Include="..\..\C++ Library\Conversion.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -20,7 +20,18 @@ cd Day\ X
 python main.py
 ```
 
-For C# solutions, make sure you have the .NET desktop development package installed in Visual studio before running a project.
+For C# solutions, make sure you have the .NET desktop development package installed in Visual Studio before running a project.
+
+If you are adding a C# project, remember to:
+
+1. Change the "Build Action" and "Copy to Output Directory" properties for test.txt and input.txt.
+
+For C++ solutions, make sure you have the Desktop development with C++ package installed in Visual Studio before running a project.
+
+If you are adding a C++ project, remember to:
+
+1. Add the "C++ Library" folder to the "Additional Include Directories" list in project properties.
+2. You may need to change the file encoding of txt's from "UTF-8-BOM" to "UTF-8".
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)

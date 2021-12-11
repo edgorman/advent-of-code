@@ -4,6 +4,8 @@
 #include <vector>
 #include <tuple>
 
+#include "Split.h"
+
 std::string PartOne(std::vector<std::tuple<std::string, std::int32_t>> input)
 {
     uint32_t horizontal = 0;
@@ -62,20 +64,6 @@ std::string PartTwo(std::vector<std::tuple<std::string, std::int32_t>> input)
     uint32_t finalPosition = horizontal * depth;
 
     return std::to_string(finalPosition);
-}
-
-std::vector<std::string> Split(std::string input, std::string delimiter)
-{
-    std::vector<std::string> tokens;
-
-    size_t pos = 0;
-    while ((pos = input.find(delimiter)) != std::string::npos) {
-        tokens.push_back(input.substr(0, pos));
-        input.erase(0, pos + delimiter.length());
-    }
-    tokens.push_back(input);
-
-    return tokens;
 }
 
 int main()
