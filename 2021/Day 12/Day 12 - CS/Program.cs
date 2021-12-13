@@ -6,7 +6,7 @@ namespace AdventOfCode2021
         static void Main(string[] args)
         {
             // Get input from txt file
-            string[] lines = System.IO.File.ReadAllLines("test.txt");
+            string[] lines = System.IO.File.ReadAllLines("input.txt");
 
             // Clean input
             Tuple<string, string>[] input = new Tuple<string, string>[lines.Length];
@@ -127,12 +127,12 @@ namespace AdventOfCode2021
             Dictionary<string, List<string>> connectDict = CreateConnectionDict(connections);
 
             // Find paths that go start to end
-            List<List<string>> routes = FindRoutes2("start", new List<string>(), "", connectDict);
+            List<List<string>> routes = FindRoutes2("start", new List<string>(), false, connectDict);
 
             return routes.Count.ToString();
         }
 
-        static List<List<string>> FindRoutes2(string current, List<string> visited, string visitedTwice, Dictionary<string, List<string>> dict)
+        static List<List<string>> FindRoutes2(string current, List<string> visited, bool visitedTwice, Dictionary<string, List<string>> dict)
         {
             // Base case: Check if reached end
             if (current == "end")
@@ -143,8 +143,8 @@ namespace AdventOfCode2021
             // Get possible routes forward
             List<string> routes = dict[current].Select(s => s).ToList();
 
-            // If a small caves has been visited twice, remove small caves
-            if (visitedTwice != "")
+            // If a small caves has been visited twice, remove small caves that have been visited
+            if (visitedTwice)
             {
                 routes.RemoveAll(r => visited.Contains(r));
             }
@@ -161,15 +161,23 @@ namespace AdventOfCode2021
                 return new List<List<string>>();
             }
 
-            // Add small caves to visited list
+            // If current cave is small
             if (char.IsLower(current, 0))
             {
-                // If current is already visited
+                // If it's already been visited
                 if (visited.Contains(current))
                 {
-                    visitedTwice = current;
+                    // If we have already visited a cave twice
+                    if (visitedTwice)
+                    {
+                        return new List<List<string>>();
+                    }
+                    else
+                    {
+                        visitedTwice = true;
+                    }
                 }
-                // Else add current to visited
+                // Else add to visited list
                 else
                 { 
                     visited.Add(current);
@@ -189,9 +197,6 @@ namespace AdventOfCode2021
                 {
                     continue;
                 }
-
-                // Filter routes that end with "end"
-                possibleRoutes = possibleRoutes.Where(r => r.Last() == "end").ToList();
 
                 // For each possible route forwards
                 foreach (List<string> pRoute in possibleRoutes)
