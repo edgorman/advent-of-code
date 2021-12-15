@@ -25,25 +25,16 @@ namespace AdventOfCode2021
 
         static string PartOne(int[][] input)
         {
-            int risk = 0;
+            // Set start and destination positions
             var start = new Tuple<int, int>(0, 0);
             var dest  = new Tuple<int, int>(input[0].Length - 1, input.Length - 1);
 
-            // Use dijkstra's algorithm to find shorted path to destination
-            var path = Dijkstra(input, start, dest);
-
-            // Backtrack path to get list of nodes
-            var next = dest;
-            while (!next.Equals(start))
-            {
-                risk += input[next.Item2][next.Item1];
-                next = path[next];
-            }
-
+            // Find shortest path to destination
+            var risk = AStar(input, start, dest);
             return risk.ToString();
         }
 
-        static Dictionary<Tuple<int, int>, Tuple<int, int>> Dijkstra(int[][] input, Tuple<int, int> source, Tuple<int, int> dest)
+        static int Dijkstra(int[][] input, Tuple<int, int> start, Tuple<int, int> dest)
         {
             HashSet<Tuple<int, int>> nodes = new HashSet<Tuple<int, int>>();
             Dictionary<Tuple<int, int>, int> dist = new Dictionary<Tuple<int, int>,int>();
@@ -61,7 +52,7 @@ namespace AdventOfCode2021
                 }
             }
 
-            dist[source] = 0;
+            dist[start] = 0;
 
             while (nodes.Count > 0)
             {
@@ -83,7 +74,7 @@ namespace AdventOfCode2021
                 // Check if u is target, if so end
                 if (dest.Equals(u))
                 {
-                    return prev;
+                    break;
                 }
 
                 // Find neighbours around the node
@@ -111,12 +102,91 @@ namespace AdventOfCode2021
                 }
             }
 
-            return prev;
+            // Calculate risk by backtracking
+            int risk = 0;
+            var next = dest;
+            while (!next.Equals(start))
+            {
+                risk += input[next.Item2][next.Item1];
+                next = prev[next];
+            }
+
+            return risk;
+        }
+
+        static int AStar(int[][] input, Tuple<int, int> source, Tuple<int, int> dest)
+        {
+            var candidates = new SortedSet<(int risk, int manhattan, Tuple<int, int> position)>();
+            candidates.Add((0, 0, Tuple.Create(0, 0)));
+
+            var visited = new HashSet<Tuple<int, int>>();
+            visited.Add(Tuple.Create(0, 0));
+
+            while (candidates.Count > 0)
+            {
+                var next = candidates.First();
+                candidates.Remove(next);
+
+                var neighbours = new HashSet<Tuple<int, int>>();
+                neighbours.Add(new Tuple<int, int>(next.position.Item1, Math.Max(0, next.position.Item2 - 1)));
+                neighbours.Add(new Tuple<int, int>(Math.Min(input[0].Length - 1, next.position.Item1 + 1), next.position.Item2));
+                neighbours.Add(new Tuple<int, int>(next.position.Item1, Math.Min(input.Length - 1, next.position.Item2 + 1)));
+                neighbours.Add(new Tuple<int, int>(Math.Max(0, next.position.Item1 - 1), next.position.Item2));
+                neighbours.Remove(next.position);
+
+                foreach(var neighbor in neighbours)
+                {
+                    if (neighbor.Equals(dest))
+                    {
+                        return next.risk + input[dest.Item2][dest.Item1];
+                    }
+
+                    if (!visited.Contains(neighbor))
+                    {
+                        visited.Add(neighbor);
+                        candidates.Add(
+                            (
+                                next.risk + input[neighbor.Item2][neighbor.Item1],
+                                (input.Length - 1 - neighbor.Item2) + (input[0].Length - 1 - neighbor.Item1),
+                                neighbor
+                            )
+                        );
+                    }
+                }
+            }
+
+            return -1;
         }
 
         static string PartTwo(int[][] input)
         {
-            return "";
+            // Generate new input with repeated 5x5 structure
+            var newInput = new int[input.Length * 5][];
+
+            for (int y = 0; y < newInput.Length; y++)
+            {
+                newInput[y] = new int[input[0].Length * 5];
+
+                for (int x = 0; x < newInput.Length; x++)
+                {
+                    var value = input[y % input.Length][x % input[0].Length] + (y / input.Length) + (x / input[0].Length);
+
+                    while (value > 9)
+                    {
+                        value -= 9;
+                    }
+
+                    newInput[y][x] = value;
+                }
+            }
+
+            // Set start and destination positions
+            var start = new Tuple<int, int>(0, 0);
+            var dest = new Tuple<int, int>(newInput[0].Length - 1, newInput.Length - 1);
+
+            // Find shortest path to destination
+            var risk = AStar(newInput, start, dest);
+            return risk.ToString();
         }
     }
 }
