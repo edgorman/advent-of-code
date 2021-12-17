@@ -1,5 +1,4 @@
-﻿using System.Collections;
-
+﻿
 namespace AdventOfCode2021
 {
     class Program
