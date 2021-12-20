@@ -24,24 +24,22 @@ namespace AdventOfCode2021
 
         static string PartOne(SFNumber[] input)
         {
-            SFNumber number = input[0];
+            SFNumber value = input[0];
 
-            // Repeat until no reductions remain
-            bool reductionsMade;
-            do
+            // For each number
+            for (int i = 1; i < input.Length; i++)
             {
-                // Explode SFNumbers
-                var eResult = number.Explode();
+                // Add next number to value
+                value = new SFNumber(value, input[i]);
 
-                // Split SFNumbers
-                var sResult = number.Split();
-
-                // Determine if reduction was made
-                reductionsMade = eResult.Item1 || sResult.Item1;
+                // Reduce number
+                value.Reduce();
             }
-            while (reductionsMade);
 
-            return "";
+            // Calculate magniute
+            int magnitude = value.Magnitude();
+
+            return magnitude.ToString();
         }
 
         static SFNumber ParseSFNumber(string line)
@@ -119,54 +117,198 @@ namespace AdventOfCode2021
             return _regular;
         }
 
+        public bool ContainsRegulars()
+        {
+            return !IsRegular() && _left.IsRegular() && _right.IsRegular();
+        }
+
+        public string ToString()
+        {
+            if (_isRegular)
+            {
+                return _regular.ToString();
+            }
+            else
+            {
+                return "[" + _left.ToString() + "," + _right.ToString() + "]";
+            }
+        }
+
+        public void Reduce()
+        {
+            // Repeat until no reductions remain
+            bool reductionsMade;
+            do
+            {
+                // Explode value
+                var eResult = Explode();
+                reductionsMade = eResult.Item1;
+
+                // If explosion didn't reduce
+                if (!reductionsMade)
+                {
+                    // Split value
+                    var sResult = Split();
+                    reductionsMade = sResult.Item1;
+                }
+            }
+            while (reductionsMade);
+        }
+
         public Tuple<bool, int, int> Explode(int depth = 0)
         {
+            // Base case: number is regular
+            if (_isRegular)
+            {
+                return Tuple.Create(false, -1, -1);
+            }
+
             // Base case: depth is enough to explode and children are regular
             if (depth >= 4 && _left.IsRegular() && _right.IsRegular())
             {
                 return Tuple.Create(true, _left.GetRegular(), _right.GetRegular());
             }
 
-            // Check if left will explode
+            // Check if either side will explode
+            bool exploded = false;
+            int leftValue = -1;
+            int rightValue = -1;
+            bool leftRegulars = false;
+            bool rightRegulars = false;
+
+            // Check if left side exploded
             var left = _left.Explode(depth + 1);
             if (left.Item1)
             {
-                // If left SFNumber is a regular, it exploded
-                if (_left.IsRegular())
+                exploded = left.Item1;
+                leftValue = left.Item2;
+                rightValue = left.Item3;
+
+                // If left children are regulars
+                if (_left.ContainsRegulars() && leftValue != -1 && rightValue != -1)
                 {
-                    // Change left SFNumber to be 0
                     _left = new SFNumber(0);
+                    leftRegulars = true;
                 }
-                // Else 
-                else
-                {
-
-                }
-
-                // If right SFNumber is a regular
-                if (_right.IsRegular())
-                {
-                    // Change right SFNumber to be exploded right value
-                    _right = new SFNumber(left.Item3);
-                }
-
-                return Tuple.Create(left.Item1, left.Item2, left.Item3);
             }
-
-            // Check if right explode
-            var right = _right.Explode();
-            if (right.Item1)
+            // Else check if right side exploded
+            else
             {
+                var right = _right.Explode(depth + 1);
+                if (right.Item1)
+                {
+                    exploded = right.Item1;
+                    leftValue = right.Item2;
+                    rightValue = right.Item3;
 
+                    // If right children are regulars
+                    if (_right.ContainsRegulars() && leftValue != -1 && rightValue != -1)
+                    {
+                        _right = new SFNumber(0);
+                        rightRegulars = true;
+                    }
+                }
             }
 
-            // Neither child exploded, return
-            return Tuple.Create(false, -1, -1);
+            // If an explosion has occurred
+            if (exploded)
+            {
+                // Check if left child is regular and left value is valid
+                if (_left.IsRegular() && leftValue != -1 && !leftRegulars)
+                {
+                    // Add left value to left child
+                    _left = new SFNumber(_left.GetRegular() + leftValue);
+                    leftValue = -1;
+                }
+                // TODO: Account for case where left is not regular
+                // Need to add value to rightmost value in left child
+
+                // Check if right child is regular and right value is valid
+                if (_right.IsRegular() && rightValue != -1 && !rightRegulars)
+                {
+                    // Add right value to left child
+                    _right = new SFNumber(_right.GetRegular() + rightValue);
+                    rightValue = -1;
+                }
+                // TODO: Account for case where left is not regular
+                // Need to add value to rightmost value in left child
+            }
+
+            return Tuple.Create(exploded, leftValue, rightValue);
         }
 
-        public Tuple<SFNumber, bool> Split()
+        public Tuple<bool, int, int> Split()
         {
-            return Tuple.Create(new SFNumber(0), false);
+            // Base case: if number is regular
+            if (_isRegular)
+            {
+                // If number should be split
+                if (_regular >= 10)
+                {
+                    return Tuple.Create(
+                        true,
+                        (int)Math.Floor(_regular / 2f),
+                        (int)Math.Ceiling(_regular / 2f)
+                    );
+                }
+                // Else number is not split
+                else
+                {
+                    return Tuple.Create(false, -1, -1);
+                }
+            }
+
+            // Check if either side will split
+            bool split = false;
+
+            // Check if left side split
+            var left = _left.Split();
+            if (left.Item1)
+            {
+                split = left.Item1;
+
+                if (left.Item2 != -1 && left.Item3 != -1)
+                {
+                    _left = new SFNumber(
+                        new SFNumber(left.Item2),
+                        new SFNumber(left.Item3)
+                    );
+                }
+            }
+            // Else check if right side exploded
+            else
+            {
+                var right = _right.Split();
+                if (right.Item1)
+                {
+                    split = right.Item1;
+
+                    if (right.Item2 != -1 && right.Item3 != -1)
+                    {
+                        _right = new SFNumber(
+                            new SFNumber(right.Item2),
+                            new SFNumber(right.Item3)
+                        );
+                    }
+                }
+            }
+
+            return Tuple.Create(split, -1, -1);
+        }
+
+        public int Magnitude()
+        {
+            // Base case: if number is regular
+            if (_isRegular)
+            {
+                return _regular;
+            }
+
+            // Recurse case: get values of left and right
+            int leftValue = 3 * _left.Magnitude();
+            int rightValue = 2 * _right.Magnitude();
+
+            return leftValue + rightValue;
         }
     }
 }
