@@ -134,6 +134,26 @@ namespace AdventOfCode2021
             }
         }
 
+        public void AddToLeftmost(int value)
+        {
+            // Base case: number is regular
+            if (_isRegular)
+            {
+                _regular += value;
+            }
+            // Base case: left is regular
+            else if (_left.IsRegular())
+            {
+                // Add value to left child
+                _left = new SFNumber(_left.GetRegular() + value);
+            }
+            // Recurse case: 
+            else
+            {
+                _left.AddToLeftmost(value);
+            }
+        }
+
         public void Reduce()
         {
             // Repeat until no reductions remain
@@ -155,27 +175,28 @@ namespace AdventOfCode2021
             while (reductionsMade);
         }
 
-        public Tuple<bool, int, int> Explode(int depth = 0)
+        public Tuple<bool, int, int, bool> Explode(int depth = 0)
         {
             // Base case: number is regular
             if (_isRegular)
             {
-                return Tuple.Create(false, -1, -1);
+                return Tuple.Create(false, -1, -1, false);
             }
 
             // Base case: depth is enough to explode and children are regular
-            if (depth >= 4 && _left.IsRegular() && _right.IsRegular())
+            if (depth >= 4 && ContainsRegulars())
             {
-                return Tuple.Create(true, _left.GetRegular(), _right.GetRegular());
+                return Tuple.Create(true, _left.GetRegular(), _right.GetRegular(), false);
             }
 
             // Check if either side will explode
-            bool exploded = false;
             int leftValue = -1;
             int rightValue = -1;
-            bool leftRegulars = false;
-            bool rightRegulars = false;
-
+            bool exploded = false;
+            bool leftExploded = false;
+            bool rightExploded = false;
+            bool isRightmost = false;
+            
             // Check if left side exploded
             var left = _left.Explode(depth + 1);
             if (left.Item1)
@@ -183,12 +204,24 @@ namespace AdventOfCode2021
                 exploded = left.Item1;
                 leftValue = left.Item2;
                 rightValue = left.Item3;
+                isRightmost = left.Item4;
 
                 // If left children are regulars
-                if (_left.ContainsRegulars() && leftValue != -1 && rightValue != -1)
+                if (_left.ContainsRegulars())
                 {
-                    _left = new SFNumber(0);
-                    leftRegulars = true;
+                    if (leftValue != -1 && rightValue != -1)
+                    {
+                        _left = new SFNumber(0);
+                    }
+                    leftExploded = true;
+                }
+
+                // If value returned is rightmost
+                if (rightValue != -1 && isRightmost)
+                {
+                    // Add right value to leftmost child of right
+                    _right.AddToLeftmost(rightValue);
+                    rightValue = -1;
                 }
             }
             // Else check if right side exploded
@@ -200,12 +233,17 @@ namespace AdventOfCode2021
                     exploded = right.Item1;
                     leftValue = right.Item2;
                     rightValue = right.Item3;
+                    isRightmost = right.Item4;
 
                     // If right children are regulars
-                    if (_right.ContainsRegulars() && leftValue != -1 && rightValue != -1)
+                    if (_right.ContainsRegulars())
                     {
-                        _right = new SFNumber(0);
-                        rightRegulars = true;
+                        if (leftValue != -1 && rightValue != -1)
+                        {
+                            _right = new SFNumber(0);
+                        }
+                        rightExploded = true;
+                        isRightmost = true;
                     }
                 }
             }
@@ -214,27 +252,23 @@ namespace AdventOfCode2021
             if (exploded)
             {
                 // Check if left child is regular and left value is valid
-                if (_left.IsRegular() && leftValue != -1 && !leftRegulars)
+                if (_left.IsRegular() && leftValue != -1 && !leftExploded)
                 {
                     // Add left value to left child
                     _left = new SFNumber(_left.GetRegular() + leftValue);
                     leftValue = -1;
                 }
-                // TODO: Account for case where left is not regular
-                // Need to add value to rightmost value in left child
 
                 // Check if right child is regular and right value is valid
-                if (_right.IsRegular() && rightValue != -1 && !rightRegulars)
+                if (_right.IsRegular() && rightValue != -1 && !rightExploded)
                 {
-                    // Add right value to left child
+                    // Add right value to right child
                     _right = new SFNumber(_right.GetRegular() + rightValue);
                     rightValue = -1;
                 }
-                // TODO: Account for case where left is not regular
-                // Need to add value to rightmost value in left child
             }
 
-            return Tuple.Create(exploded, leftValue, rightValue);
+            return Tuple.Create(exploded, leftValue, rightValue, isRightmost);
         }
 
         public Tuple<bool, int, int> Split()
