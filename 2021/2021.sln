@@ -45,9 +45,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Day 17 - CS", "Day 17\Day 1
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Day 18 - CS", "Day 18\Day 18 - CPP\Day 18 - CS.csproj", "{E468224B-2157-43DD-B38B-D8E38AE4DF86}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Day 19 - CS", "Day 19\Day 19 - CS\Day 19 - CS.csproj", "{DA6AF972-46E9-43EC-90C3-DA8D9DCD1738}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Day 19 - CS", "Day 19\Day 19 - CS\Day 19 - CS.csproj", "{DA6AF972-46E9-43EC-90C3-DA8D9DCD1738}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Day 20 - CS", "Day 20\Day 20\Day 20 - CS.csproj", "{5D41B011-A00E-411B-A317-9AC4A33749E1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Day 20 - CS", "Day 20\Day 20\Day 20 - CS.csproj", "{5D41B011-A00E-411B-A317-9AC4A33749E1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Day 21 - CS", "Day 21\Day 21 - CS\Day 21 - CS.csproj", "{66D4FC1C-3963-40D1-88EA-DE3A32666CEF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -335,6 +337,18 @@ Global
 		{5D41B011-A00E-411B-A317-9AC4A33749E1}.Release|x64.Build.0 = Release|Any CPU
 		{5D41B011-A00E-411B-A317-9AC4A33749E1}.Release|x86.ActiveCfg = Release|Any CPU
 		{5D41B011-A00E-411B-A317-9AC4A33749E1}.Release|x86.Build.0 = Release|Any CPU
+		{66D4FC1C-3963-40D1-88EA-DE3A32666CEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66D4FC1C-3963-40D1-88EA-DE3A32666CEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66D4FC1C-3963-40D1-88EA-DE3A32666CEF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{66D4FC1C-3963-40D1-88EA-DE3A32666CEF}.Debug|x64.Build.0 = Debug|Any CPU
+		{66D4FC1C-3963-40D1-88EA-DE3A32666CEF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{66D4FC1C-3963-40D1-88EA-DE3A32666CEF}.Debug|x86.Build.0 = Debug|Any CPU
+		{66D4FC1C-3963-40D1-88EA-DE3A32666CEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66D4FC1C-3963-40D1-88EA-DE3A32666CEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66D4FC1C-3963-40D1-88EA-DE3A32666CEF}.Release|x64.ActiveCfg = Release|Any CPU
+		{66D4FC1C-3963-40D1-88EA-DE3A32666CEF}.Release|x64.Build.0 = Release|Any CPU
+		{66D4FC1C-3963-40D1-88EA-DE3A32666CEF}.Release|x86.ActiveCfg = Release|Any CPU
+		{66D4FC1C-3963-40D1-88EA-DE3A32666CEF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
