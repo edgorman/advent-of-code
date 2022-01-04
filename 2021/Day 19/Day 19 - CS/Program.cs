@@ -46,8 +46,8 @@ namespace AdventOfCode2021
                 var si = scanners.Dequeue();
 
                 // Get dictionary of distances between beacons in scanner 1 and scanner i
-                // Key is distance, value is pair of beaconds
-                // Only keep those shorter than 500
+                // Key is distance, value is pair of beacons
+                // Only keep those shorter than max distance 500
                 var d0 = s0.GetDistancesPairs(500);
                 var di = si.GetDistancesPairs(500);
 
@@ -160,9 +160,9 @@ namespace AdventOfCode2021
         public double DistanceTo(Beacon b)
         {
             return Math.Sqrt(
-                Math.Pow(X() - b.X(), 2) + 
-                Math.Pow(Y() - b.Y(), 2) + 
-                Math.Pow(Z() - b.Z(), 2)
+                Math.Pow(Math.Abs(X() - b.X()), 2) + 
+                Math.Pow(Math.Abs(Y() - b.Y()), 2) + 
+                Math.Pow(Math.Abs(Z() - b.Z()), 2)
             );
         }
 
