@@ -165,7 +165,30 @@ namespace AdventOfCode2021
         }
         static string PartTwo(string[] input)
         {
-            return "";
+            int maxMagnitude = 0;
+
+            // Check every combination of numbers
+            for (int i = 0; i < input.Length - 1; i++)
+            {
+                for (int j = i + 1; j < input.Length; j++)
+                {
+                    var a = input[i];
+                    var b = input[j];
+
+                    // Check left configuration
+                    var left = int.Parse(PartOne(new string[] { a, b }));
+                    if (left > maxMagnitude)
+                        maxMagnitude = left;
+
+                    // Check right configuration
+                    var right = int.Parse(PartOne(new string[] { b, a }));
+                    if (right > maxMagnitude)
+                        maxMagnitude = right;
+                }
+            }
+
+            // Return largest magnitude
+            return maxMagnitude.ToString();
         }
     }
 
