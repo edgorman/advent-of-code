@@ -1,4 +1,6 @@
 ﻿
+using System.Text.RegularExpressions;
+
 namespace AdventOfCode2021
 {
     class Program
@@ -6,168 +8,166 @@ namespace AdventOfCode2021
         static void Main(string[] args)
         {
             // Get input from txt file
-            string[] lines = System.IO.File.ReadAllLines("test.txt");
-
-            // Clean input
-            SFNumber[] input = new SFNumber[lines.Length];
-            for (int i = 0; i < lines.Length; i++)
-            {
-                input[i] = ParseSFNumber(lines[i]);
-            }
+            string[] lines = System.IO.File.ReadAllLines("input.txt");
 
             // Part 1
-            Console.WriteLine(PartOne(input));
+            Console.WriteLine(PartOne(lines));
 
             // Part 2
-            Console.WriteLine(PartTwo(input));
+            Console.WriteLine(PartTwo(lines));
         }
 
-        static string PartOne(SFNumber[] input)
+        static string PartOne(string[] input)
         {
-            SFNumber number = input[0];
+            string value = input[0];
 
-            // Repeat until no reductions remain
-            bool reductionsMade;
-            do
+            // Add each input to value successively
+            for (int i = 1; i < input.Length; i++)
             {
-                // Explode SFNumbers
-                var eResult = number.Explode();
+                value = Add(value, input[i]);
 
-                // Split SFNumbers
-                var sResult = number.Split();
-
-                // Determine if reduction was made
-                reductionsMade = eResult.Item1 || sResult.Item1;
-            }
-            while (reductionsMade);
-
-            return "";
-        }
-
-        static SFNumber ParseSFNumber(string line)
-        {
-            // Base case: line contains regular number
-            if (line.Length == 1)
-            {
-                return new SFNumber(Convert.ToInt32(line));
-            }
-
-            // Find the index of char separating the pair
-            int index = 0;
-            Stack<char> brackets = new Stack<char>();
-
-            for (int i = 1; i < line.Length - 1; i++)
-            {
-                // If character is open bracket
-                if (line[i] == '[')
+                // Reduce number until none remain
+                while (true)
                 {
-                    brackets.Push(line[i]);
-                }
-                // Else if character is open bracket
-                else if (line[i] == ']')
-                {
-                    brackets.Pop();
-                }
-                // Else if character is separator AND brackets are closed
-                else if (line[i] == ',' && brackets.Count == 0)
-                {
-                    index = i;
+                    // Check for explosion
+                    string explodeValue = Explode(value);
+                    if (explodeValue != value) 
+                    { 
+                        value = explodeValue; 
+                        continue; 
+                    }
+
+                    // Check for split
+                    string splitValue = Split(value);
+                    if (splitValue != value) 
+                    { 
+                        value = splitValue; 
+                        continue; 
+                    }
+
+                    // No reductions happened, exit loop
                     break;
                 }
             }
 
-            // Recurse case: parse each pair and return
-            SFNumber left = ParseSFNumber(line[1..index]);
-            SFNumber right = ParseSFNumber(line[(index+1)..(line.Length-1)]);
+            return Magnitude(value);
+        }
+        static string Add(string left, string right)
+        {
+            return "[" + left + "," + right + "]";
+        }
+        static string Explode(string number)
+        {
+            int openBracketCount = 0;
 
-            return new SFNumber(left, right);
+            // For each character in the number
+            for (int i = 0; i < number.Length; i++)
+            {
+                char c = number[i];
+
+                // Increment or decrement open bracket count
+                if (c == '[')
+                {
+                    openBracketCount++;
+                    continue;
+                }
+                else if (c == ']')
+                {
+                    openBracketCount--;
+                    continue;
+                }
+
+                // If count is greater than four
+                if (openBracketCount > 4)
+                {
+                    string remainingChars = number.Substring(i);
+
+                    // If the next characters are a pair
+                    if (Regex.IsMatch(remainingChars, "^\\d+,\\d+"))
+                    {
+                        // Extract pair of numbers
+                        var match = Regex.Match(remainingChars, "^\\d+,\\d+");
+                        var pair = match.Value.Split(',');
+                        var leftValue = pair[0];
+                        var rightValue = pair[1];
+
+                        // Replace match area with a zero
+                        number = number[..(i - 1)] + "0" + number[(i + 1 + match.Value.Length)..];
+
+                        // Add value to next left number
+                        var leftMatch = Regex.Match(number[..(i - 1)], "\\d+", RegexOptions.RightToLeft);
+
+                        if (leftMatch.Success)
+                        {
+                            int value = int.Parse(leftMatch.Value) + int.Parse(leftValue);
+                            number = number[..leftMatch.Index] + value + number[(leftMatch.Index + leftMatch.Length)..];
+                        }
+
+                        // Add value to next right number
+                        var rightMatch = Regex.Match(number[(i + 1)..], "\\d+");
+
+                        if (rightMatch.Success)
+                        {
+                            int value = int.Parse(rightMatch.Value) + int.Parse(rightValue);
+                            number = number[..(1 + i + rightMatch.Index)] + value + number[(1 + i + rightMatch.Index + rightMatch.Length)..];
+                        }
+
+                        return number;
+                    }
+                }
+            }
+
+            return number;
+        }
+        
+        static string Split(string number)
+        {
+            var matches = Regex.Matches(number, "\\d+");
+
+            // For each number in the string
+            foreach (Match match in matches)
+            {
+                int value = int.Parse(match.Value);
+
+                // If number should be split
+                if (value > 9)
+                {
+                    var left = Math.Floor(value / 2f).ToString();
+                    var right = Math.Ceiling(value / 2f).ToString();
+                    var result = Add(left, right);
+
+                    return number[..match.Index] + result + number[(match.Index + match.Length)..];
+                }
+            }
+
+            return number;
         }
 
-        static string PartTwo(SFNumber[] input)
+        static string Magnitude(string number)
+        {
+            // Iterate until a single number remains
+            while(number.Contains(','))
+            {
+                // Find next regular pair
+                var match = Regex.Match(number, "\\[\\d+,\\d+\\]");
+                var pair = match.Value.Split(',');
+                var leftValue = pair[0][1..];
+                var rightValue = pair[1][0..^1];
+
+                // Calculate magnitude of pair
+                var magnitude = int.Parse(leftValue) * 3 + int.Parse(rightValue) * 2;
+                
+                // Replace pair with magnitude
+                number = number[..match.Index] + magnitude + number[(match.Index + match.Length)..];
+            }
+
+            return number;
+        }
+        static string PartTwo(string[] input)
         {
             return "";
         }
     }
 
-    class SFNumber
-    {
-        private int _regular;
-        private bool _isRegular;
-        private SFNumber _left;
-        private SFNumber _right;
-
-        public SFNumber(SFNumber left, SFNumber right)
-        {
-            _left = left;
-            _right = right;
-            _isRegular = false;
-        }
-
-        public SFNumber(int regular)
-        {
-            _regular = regular;
-            _isRegular = true;
-        }
-
-        public bool IsRegular()
-        {
-            return _isRegular;
-        }
-
-        public int GetRegular()
-        {
-            return _regular;
-        }
-
-        public Tuple<bool, int, int> Explode(int depth = 0)
-        {
-            // Base case: depth is enough to explode and children are regular
-            if (depth >= 4 && _left.IsRegular() && _right.IsRegular())
-            {
-                return Tuple.Create(true, _left.GetRegular(), _right.GetRegular());
-            }
-
-            // Check if left will explode
-            var left = _left.Explode(depth + 1);
-            if (left.Item1)
-            {
-                // If left SFNumber is a regular, it exploded
-                if (_left.IsRegular())
-                {
-                    // Change left SFNumber to be 0
-                    _left = new SFNumber(0);
-                }
-                // Else 
-                else
-                {
-
-                }
-
-                // If right SFNumber is a regular
-                if (_right.IsRegular())
-                {
-                    // Change right SFNumber to be exploded right value
-                    _right = new SFNumber(left.Item3);
-                }
-
-                return Tuple.Create(left.Item1, left.Item2, left.Item3);
-            }
-
-            // Check if right explode
-            var right = _right.Explode();
-            if (right.Item1)
-            {
-
-            }
-
-            // Neither child exploded, return
-            return Tuple.Create(false, -1, -1);
-        }
-
-        public Tuple<SFNumber, bool> Split()
-        {
-            return Tuple.Create(new SFNumber(0), false);
-        }
-    }
 }
 
