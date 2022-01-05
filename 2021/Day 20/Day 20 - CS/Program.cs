@@ -24,62 +24,62 @@ namespace AdventOfCode2021
             }
 
             // Part 1
-            Console.WriteLine(PartOne(algorithm, lights));
+            Console.WriteLine(PartOne(algorithm, lights, 2));
 
             // Part 2
-            Console.WriteLine(PartTwo(algorithm, lights));
+            Console.WriteLine(PartOne(algorithm, lights, 50));
         }
 
-        static string PartOne(char[] algorithm, HashSet<Tuple<int, int>> lights)
+        static string PartOne(char[] algorithm, HashSet<Tuple<int, int>> lights, int iterations)
         {
+            // Calculate boundaries of lights
+            var topmost = lights.MinBy(l => l.Item2).Item2;
+            var rightmost = lights.MaxBy(l => l.Item1).Item1;
+            var bottommost = lights.MaxBy(l => l.Item2).Item2;
+            var leftmost = lights.MinBy(l => l.Item1).Item1;
+
             // Enhance the image twice
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < iterations; i++)
             {
+                // Infinite region surrounding lights will depend on the iteration
+                // Initially they are all black, but after first iteration will be all light
+                // This is not recorded in the new lights that are generated because
+                // They would be outside the top/right/bottom/leftmost values
                 var newLights = new HashSet<Tuple<int, int>>();
 
-                // Find topmost, leftmost, rightmost, bottommost values
-                var top = int.MaxValue;
-                var right = int.MinValue;
-                var bottom = int.MinValue;
-                var left = int.MaxValue;
-                foreach (var light in lights)
+                // For each possible point of light (x, y)
+                for (int y = topmost - 1; y <= bottommost + 1; y++)
                 {
-                    if (light.Item2 < top) { top = light.Item2; }
-                    if (light.Item1 > right) { right = light.Item1; }
-                    if (light.Item2 > bottom) { bottom = light.Item2; }
-                    if (light.Item1 < left) { left = light.Item1; }
-                }
-
-                // Iterate across every value in range
-                for (int y = top - 1; y <= bottom + 1; y++)
-                {
-                    for (int x = left - 1; x <= right + 1; x++)
+                    for (int x = leftmost - 1; x <= rightmost + 1; x++)
                     {
-                        var bin = "";
-
-                        // Read 9 values surrounding x, y
-                        for (int j = y - 1; j <= y + 1; j++)
+                        // Get surrounding pixels of point (j, k)
+                        var binary = "";
+                        for (int k = y - 1; k <= y + 1; k++)
                         {
-                            for (int k = x - 1; k <= x + 1; k++)
+                            for (int j = x - 1; j <= x + 1; j++)
                             {
-                                if (lights.Contains(Tuple.Create(k, j)))
+                                if (algorithm[0] == '#' && i % 2 == 1 && 
+                                    (k < topmost || k > bottommost || 
+                                    j < leftmost || j > rightmost))
                                 {
-                                    bin += "1";
+                                    binary += "1";
+                                }
+                                else if (lights.Contains(Tuple.Create(j, k)))
+                                {
+                                    binary += "1";
                                 }
                                 else
                                 {
-                                    bin += "0";
+                                    binary += "0";
                                 }
                             }
                         }
 
-                        // Convert binary to integer
-                        var index = Convert.ToInt32(bin, 2);
-
-                        // Read value from algorithm index
+                        // Convert to index position
+                        var index = Convert.ToInt32(binary, 2);
                         var value = algorithm[index];
 
-                        // If value is a light, add to new lights
+                        // If algorithm is a point of light, add to new image
                         if (value == '#')
                         {
                             newLights.Add(Tuple.Create(x, y));
@@ -87,16 +87,19 @@ namespace AdventOfCode2021
                     }
                 }
 
+                // Update lights with enhanced version
                 lights = newLights;
+
+                // Update boundary for which light/dark pixels will exist
+                topmost--;
+                rightmost++;
+                bottommost++;
+                leftmost--;
             }
 
             return lights.Count.ToString();
         }
 
-        static string PartTwo(char[] algorithm, HashSet<Tuple<int, int>> lights)
-        {
-            return "";
-        }
     }
 
 }
