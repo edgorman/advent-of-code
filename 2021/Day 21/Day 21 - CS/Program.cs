@@ -6,7 +6,7 @@ namespace AdventOfCode2021
         static void Main(string[] args)
         {
             // Get input from txt file
-            string[] lines = System.IO.File.ReadAllLines("test.txt");
+            string[] lines = System.IO.File.ReadAllLines("input.txt");
             int a = lines[0].Last() - '0';
             int b = lines[1].Last() - '0';
 
@@ -121,14 +121,18 @@ namespace AdventOfCode2021
                 // Generate children game states
                 // <p1 score, p1 position, p2 score, p2 position, p1 turn>
                 var childStatesDict = new Dictionary<Tuple<int, int, int, int, bool>, long>();
-                if (playerOneRoll)
+                foreach (var roll in possibleRolls)
                 {
-                    foreach (var roll in possibleRolls)
+                    if (playerOneRoll)
                     {
-                        int newPosition = playerOnePosition + roll.Item1 % 10 == 0 ? 10 : playerOnePosition + roll.Item1;
+                        int newPosition = playerOnePosition + roll.Item1;
+                        newPosition = newPosition % 10;
+                        int newScore = playerOneScore;
+                        newScore += newPosition == 0 ? 10 : newPosition;
+
                         childStatesDict.Add(
                             Tuple.Create(
-                                playerOneScore + newPosition, 
+                                newScore, 
                                 newPosition, 
                                 playerTwoScore, 
                                 playerTwoPosition, 
@@ -137,17 +141,18 @@ namespace AdventOfCode2021
                             roll.Item2 * count
                         );
                     }
-                }
-                else
-                {
-                    foreach (var roll in possibleRolls)
+                    else
                     {
-                        int newPosition = playerTwoPosition + roll.Item1 % 10 == 0 ? 10 : playerTwoPosition + roll.Item1;
+                        int newPosition = playerTwoPosition + roll.Item1;
+                        newPosition = newPosition % 10;
+                        int newScore = playerTwoScore;
+                        newScore += newPosition == 0 ? 10 : newPosition;
+
                         childStatesDict.Add(
                             Tuple.Create(
                                 playerOneScore, 
-                                playerOnePosition, 
-                                playerTwoScore + newPosition, 
+                                playerOnePosition,
+                                newScore, 
                                 newPosition, 
                                 !playerOneRoll
                             ), 
@@ -161,7 +166,7 @@ namespace AdventOfCode2021
                 {
                     if (gameStateDict.ContainsKey(childState))
                     {
-                        gameStateDict[childState] *= childStatesDict[childState];
+                        gameStateDict[childState] = gameStateDict[childState] * childStatesDict[childState];
                     }
                     else
                     {
