@@ -39,11 +39,24 @@ namespace AdventOfCode2021
         static string PartOne(Queue<Scanner> scanners)
         {
             var s0 = scanners.Dequeue();
+            int scannerCheckCount = 0;
 
             // While there are scanners remaining
             while (scanners.Count > 0)
             {
+                // Get the front scanner
                 var si = scanners.Dequeue();
+                scannerCheckCount++;
+
+                // Check if number of scanners checked equals those remaining
+                // Replace s0 with another scanner, add s0 to the queue
+                if (scannerCheckCount > scanners.Count)
+                {
+                    scanners.Enqueue(s0);
+                    s0 = si;
+                    si = scanners.Dequeue();
+                    scannerCheckCount = 0;
+                }
 
                 // Get dictionary of distances between beacons in scanner 1 and scanner i
                 // Key is distance, value is pair of beacons
@@ -58,7 +71,7 @@ namespace AdventOfCode2021
 
                 // If at least 12 pairs of beacons match
                 // Then try all orientations of scanner i to identify the matching pairs
-                if (matchingKeys.Count() >= Math.Min(si.Count(), 12))
+                if (matchingKeys.Any())
                 {
                     // Get indexes of first matching pairs
                     var key = matchingKeys.First();
@@ -102,10 +115,17 @@ namespace AdventOfCode2021
                     // If match was found, add beacons from match to scanner 0
                     if (match != null)
                     {
+                        scannerCheckCount = 0;
+
                         for (int j = 0; j < match.Count(); j++)
                         {
                             s0.AddBeacon(match.GetIndex(j));
                         }
+                    }
+                    // Else add scanner to back of queue
+                    else
+                    {
+                        scanners.Enqueue(si);
                     }
                 }
                 // Else add scanner to back of queue
