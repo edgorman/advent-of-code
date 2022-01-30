@@ -9,7 +9,7 @@ namespace AdventOfCode2021
             string[] lines = System.IO.File.ReadAllLines("input.txt");
 
             // Clean input
-            var instructions = new List<Tuple<Cuboid, bool>>();
+            var instructions = new Dictionary<Cuboid, int>();
 
             for (int i = 0; i < lines.Length; i++)
             {
@@ -22,10 +22,10 @@ namespace AdventOfCode2021
                 var start = new Position(xr[0], yr[0], zr[0]);
                 var end = new Position(xr[1], yr[1], zr[1]);
 
-                var state = info[0] == "on";
                 var cube = new Cuboid(start, end);
+                var value = info[0] == "on" ? 1 : 0;
 
-                instructions.Add(Tuple.Create(cube, state));
+                instructions.Add(cube, value);
             }
 
             // Part 1
@@ -39,16 +39,16 @@ namespace AdventOfCode2021
             Console.WriteLine(PartOne(instructions, new Cuboid(s, e)));
         }
 
-        static string PartOne(List<Tuple<Cuboid, bool>> instructions, Cuboid validRange)
+        static string PartOne(Dictionary<Cuboid, int> instructions, Cuboid validRange)
         {
-            var reactorCubes = new List<Tuple<Cuboid, int>>();
+            var reactorCubes = new Dictionary<Cuboid, int>();
 
             // For each instruction
             foreach (var instruction in instructions)
             {
-                var cube = instruction.Item1;
-                var state = instruction.Item2;
-                var newCubes = new List<Tuple<Cuboid, int>>();
+                var cube = instruction.Key;
+                var value = instruction.Value;
+                var newCubes = new Dictionary<Cuboid, int>();
 
                 // Check that cube is contained by valid range
                 if (!validRange.Contains(cube))
@@ -56,37 +56,56 @@ namespace AdventOfCode2021
                     continue;
                 }
 
-                // If state is on
-                if (state)
+                // If state is on, add to dict of new cubes
+                if (value == 1)
                 {
-                    newCubes.Add(Tuple.Create(cube, 1));
+                    newCubes.Add(cube, 1);
                 }
 
                 // For each cube in reactor
                 foreach (var rCube in reactorCubes)
                 {
-                    var otherCube = rCube.Item1;
-                    var otherState = rCube.Item2;
-
                     // Calculate intersection of instruciton's cube and reactor's cube
-                    var iCube = cube.Intersect(otherCube);
+                    var iCube = cube.Intersect(rCube.Key);
 
                     // If intersection cube has volume greater than zero
                     if (iCube.Volume() > 0)
                     {
-                        newCubes.Add(Tuple.Create(iCube, -otherState));
+                        // Add cube to dict of new cubes
+                        if (newCubes.ContainsKey(iCube))
+                        {
+                            newCubes[iCube] -= rCube.Value;
+                        }
+                        else
+                        {
+                            newCubes.Add(iCube, -rCube.Value);
+                        }
                     }
                 }
 
                 // Add each new cube to reactor
-                reactorCubes.AddRange(newCubes);
+                foreach (var nCube in newCubes)
+                {
+                    // Add cube to dict of reactor cubes
+                    if (reactorCubes.ContainsKey(nCube.Key))
+                    {
+                        reactorCubes[nCube.Key] += nCube.Value;
+                    }
+                    else
+                    {
+                        reactorCubes.Add(nCube.Key, nCube.Value);
+                    }
+                }
             }
 
             // Calculate volume of reactor that is on
             long onCount = 0;
             foreach (var rCube in reactorCubes)
             {
-                onCount += rCube.Item1.Volume() * rCube.Item2;
+                if (rCube.Value != 0 && rCube.Key.Volume() != 1)
+                {
+                    onCount += rCube.Key.Volume() * rCube.Value;
+                }
             }
 
             return onCount.ToString();
@@ -95,9 +114,9 @@ namespace AdventOfCode2021
 
     class Position
     {
-        public int x;
-        public int y;
-        public int z;
+        public long x;
+        public long y;
+        public long z;
 
         public Position()
         {
@@ -106,7 +125,7 @@ namespace AdventOfCode2021
             z = 0;
         }
 
-        public Position(int i, int j, int k)
+        public Position(long i, long j, long k)
         {
             x = i;
             y = j;
@@ -131,6 +150,11 @@ namespace AdventOfCode2021
 
             return x == p.x && y == p.y && z == p.z;
         }
+
+        public override int GetHashCode()
+        {
+            return x.GetHashCode() + y.GetHashCode() + z.GetHashCode();
+        }
     }
 
     class Cuboid
@@ -142,6 +166,31 @@ namespace AdventOfCode2021
         {
             start = s;
             end = e;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as Cuboid);
+        }
+
+        public bool Equals(Cuboid o)
+        {
+            if (o is null)
+                return false;
+
+            if (ReferenceEquals(this, o))
+                return true;
+
+            if (GetType() != o.GetType())
+                return false;
+
+            return start.Equals(o.start) && end.Equals(o.end) ||
+                start.Equals(o.end) && end.Equals(o.start);
+        }
+
+        public override int GetHashCode()
+        {
+            return ToString().GetHashCode();
         }
 
         public override String ToString()
@@ -189,5 +238,6 @@ namespace AdventOfCode2021
 
             return new Cuboid(s, e);
         }
+
     }
 }
