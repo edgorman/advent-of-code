@@ -1,4 +1,10 @@
-﻿
+﻿// Code is heavily inspired by the reverse engineering performed
+// by the folks over in r/adventofcode
+// and would likely have taken me far longer without
+// https://www.reddit.com/r/adventofcode/comments/rnejv5/2021_day_24_solutions/
+
+using System.Diagnostics;
+
 namespace AdventOfCode2021
 {
     class Program
@@ -15,31 +21,90 @@ namespace AdventOfCode2021
                 instructions.Enqueue(line);
             }
 
-            // Part 1
-            Console.WriteLine(PartOne(instructions, 74929995999389));
-
-            // Part 2
-            Console.WriteLine(PartOne(instructions, 11118151637112));
-        }
-
-        static string PartOne(Queue<string> instructions, long value)
-        {
             // Create ALU
             var alu = new ALU();
 
-            // Convert value to input stack
-            var input = new Stack<int>();
-            foreach (var v in value.ToString().Reverse())
-            {
-                input.Push(v - '0');
-            }
-
-            // Run value through MONAD program
-            alu.Reset(instructions);
-            alu.Run(input);
+            // Part 1
+            var part1 = PartOne(new Queue<string>(instructions));
+            alu.Reset(new Queue<string>(instructions));
+            alu.Run(part1);
 
             // If z is 0, number was valid
-            return alu.z.ToString();
+            Debug.Assert(alu.z == 0);
+            Console.WriteLine(part1);
+
+            // Part 2
+            var part2 = PartTwo(new Queue<string>(instructions));
+            alu.Reset(new Queue<string>(instructions));
+            alu.Run(part2);
+
+            // If z is 0, number was valid
+            Debug.Assert(alu.z == 0);
+            Console.WriteLine(part2);
+        }
+
+        static long PartOne(Queue<string> instructions)
+        {
+            var s = instructions.ToList();
+            var p = new Stack<Tuple<long, long>>();
+            var v = 99999999999999;
+
+            // MONDAD is split into 14 code chunks, one per input value to the program
+            // We will process each in order, having simplified the instructions
+            for (long i = 0; i < 14; i++)
+            {
+                var a = long.Parse(s[(int) (18 * i + 5)].Split(' ').Last());
+                var b = long.Parse(s[(int) (18 * i + 15)].Split(' ').Last());
+
+                // If value should be put on stack
+                if (a > 0)
+                {
+                    p.Push(Tuple.Create(i, b));
+                }
+                // Else pop value from stack
+                else
+                {
+                    var pop = p.Pop();
+                    var j = pop.Item1;
+                    b = pop.Item2;
+
+                    var exp = a <= -b ? 13 - i : 13 - j;
+                    v -= (long) Math.Abs((a + b) * Math.Pow(10, exp));
+                }
+            }
+            return v;
+        }
+
+        static long PartTwo(Queue<string> instructions)
+        {
+            var s = instructions.ToList();
+            var p = new Stack<Tuple<long, long>>();
+            var v = 11111111111111;
+
+            // MONDAD is split into 14 code chunks, one per input value to the program
+            // We will process each in order, having simplified the instructions
+            for (long i = 0; i < 14; i++)
+            {
+                var a = long.Parse(s[(int)(18 * i + 5)].Split(' ').Last());
+                var b = long.Parse(s[(int)(18 * i + 15)].Split(' ').Last());
+
+                // If value should be put on stack
+                if (a > 0)
+                {
+                    p.Push(Tuple.Create(i, b));
+                }
+                // Else pop value from stack
+                else
+                {
+                    var pop = p.Pop();
+                    var j = pop.Item1;
+                    b = pop.Item2;
+
+                    var exp = a >= -b ? 13 - i : 13 - j;
+                    v += (long)Math.Abs((a + b) * Math.Pow(10, exp));
+                }
+            }
+            return v;
         }
     }
 
@@ -58,20 +123,27 @@ namespace AdventOfCode2021
             x = 0;
             y = 0;
             z = 0;
-            _instructions = new Queue<string>(s);
+            _instructions = s;
         }
 
-        public void Run(Stack<int> inputs)
+        public void Run(long value)
         {
+            // Convert input integer to stack
+            var input = new Stack<int>();
+            foreach (var v in value.ToString().Reverse())
+            {
+                input.Push(v - '0');
+            }
+
             // While there are operations remaining
-            while(_instructions.TryDequeue(out string instruction))
+            while (_instructions.TryDequeue(out string instruction))
             {
                 var args = instruction.Split(' ');
 
                 switch(args[0])
                 {
                     case "inp":
-                        Set(args[1], inputs.Pop());
+                        Set(args[1], input.Pop());
                         break;
                     case "add":
                         Add(args[1], args[2]);
@@ -174,23 +246,3 @@ namespace AdventOfCode2021
     }
 }
 
-/**
-Python code for finding the min and max values
-From https://www.reddit.com/user/4HbQ/
-
-instr, stack = [*open(0)], []
-
-p, q = 99999999999999, 11111111111111
-
-for i in range(14):
-    a = int(instr[18*i+5].split()[-1])
-    b = int(instr[18*i+15].split()[-1])
-
-    if a > 0: stack+=[(i, b)]; continue
-    j, b = stack.pop()
-
-    p -= abs((a+b)*10**(13-[i,j][a>-b]))
-    q += abs((a+b)*10**(13-[i,j][a<-b]))
-
-print(p, q)
-*/
