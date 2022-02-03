@@ -13,7 +13,6 @@ namespace AdventOfCode2021
 
             // Part 2
             Console.WriteLine(PartTwo(lines));
-
         }
 
         static string PartOne(string[] seafloor)
@@ -46,28 +45,6 @@ namespace AdventOfCode2021
             // Iterate until no cucumbers can move
             while (movingCount > 0)
             {
-                //Console.WriteLine(stepCount);
-                //for (int y = 0; y < seafloor.Length; y++)
-                //{
-                //    for (int x = 0; x < seafloor[y].Length; x++)
-                //    {
-                //        if (eastCucumbers.Contains(Tuple.Create(x, y)))
-                //        {
-                //            Console.Write('>');
-                //        }
-                //        else if (southCucumbers.Contains(Tuple.Create(x, y)))
-                //        {
-                //            Console.Write('v');
-                //        }
-                //        else
-                //        {
-                //            Console.Write('.');
-                //        }
-                //    }
-                //    Console.WriteLine();
-                //}
-                //Console.WriteLine();
-
                 movingCount = 0;
                 var newEastCucumbers = new HashSet<Tuple<int, int>>();
                 var newSouthCucumbers = new HashSet<Tuple<int, int>>();
@@ -104,6 +81,7 @@ namespace AdventOfCode2021
                     }
                 }
 
+                // Update cucumbers and increment step count
                 eastCucumbers = newEastCucumbers;
                 southCucumbers = newSouthCucumbers;
                 stepCount++;
