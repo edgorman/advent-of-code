@@ -6,187 +6,217 @@ namespace AdventOfCode2021
         static void Main(string[] args)
         {
             // Get input from txt file
-            string[] lines = System.IO.File.ReadAllLines("input.txt");
+            string[] lines = System.IO.File.ReadAllLines("test.txt");
 
             // Clean input
-            Queue<Scanner> scanners = new Queue<Scanner>();
-            Scanner scanner = new Scanner();
+            var scanners = new List<Scanner>();
+            var scanner = new Scanner();
             for (int i = 0; i < lines.Length; i++)
             {
                 if (lines[i].Contains("--- scanner"))
                 {
-                    scanner = new Scanner();
+                    scanner = new Scanner(int.Parse(lines[i].Split(' ')[2]));
                 }
                 else if (lines[i].Length == 0)
                 {
-                    scanners.Enqueue(scanner);
+                    scanners.Add(scanner);
                 }
                 else
                 {
                     var values = lines[i].Split(',').ToList().ConvertAll(int.Parse);
-                    scanner.AddBeacon(new Beacon(values[0], values[1], values[2]));
+                    scanner.beacons.Add(new Position(values[0], values[1], values[2]));
                 }
             }
-            scanners.Enqueue(scanner);
+            scanners.Add(scanner);
+
+            foreach (Scanner s in scanners)
+            {
+                s.GenerateFingerprint();
+            }
+
+            var scanner0 = AssembleScannerMap(scanners);
 
             // Part 1
-            Console.WriteLine(PartOne(scanners));
+            Console.WriteLine(PartOne(scanner0));
 
             // Part 2
-            Console.WriteLine(PartTwo(scanners));
+            Console.WriteLine(PartTwo(scanner0));
         }
 
-        static string PartOne(Queue<Scanner> scanners)
+        static Scanner AssembleScannerMap(List<Scanner> scanners)
         {
-            var s0 = scanners.Dequeue();
-            int scannerCheckCount = 0;
-
-            // While there are scanners remaining
-            while (scanners.Count > 0)
+            // Generate similarity matrix of scanners
+            var scannerPairSimilarity = new PriorityQueue<Tuple<Scanner, Scanner>, int>();
+            for (int i = 0; i < scanners.Count - 1; i++)
             {
-                // Get the front scanner
-                var si = scanners.Dequeue();
-                scannerCheckCount++;
-
-                // Check if number of scanners checked equals those remaining
-                // Replace s0 with another scanner, add s0 to the queue
-                if (scannerCheckCount > scanners.Count)
+                for (int j = i + 1; j < scanners.Count; j++)
                 {
-                    scanners.Enqueue(s0);
-                    s0 = si;
-                    si = scanners.Dequeue();
-                    scannerCheckCount = 0;
+                    // Using "500 - similarity" because PQ sort by min to max
+                    var similarity = 500 - scanners[i].SimilarityTo(scanners[j]);
+                    scannerPairSimilarity.Enqueue(Tuple.Create(scanners[i], scanners[j]), similarity);
                 }
-
-                // Get dictionary of distances between beacons in scanner 1 and scanner i
-                // Key is distance, value is pair of beacons
-                // Only keep those shorter than max distance 500
-                var d0 = s0.GetDistancesPairs(500);
-                var di = si.GetDistancesPairs(500);
-
-                // Find the distances that match
-                var k0 = d0.Keys;
-                var ki = di.Keys;
-                var matchingKeys = k0.Intersect(ki);
-
-                // If at least 12 pairs of beacons match
-                // Then try all orientations of scanner i to identify the matching pairs
-                if (matchingKeys.Any())
-                {
-                    // Get indexes of first matching pairs
-                    var key = matchingKeys.First();
-                    var i0 = d0[key];
-                    var ii = di[key];
-
-                    // Try every possible orientation and translation
-                    // Until a match is found
-                    Scanner? match = null;
-                    foreach (var so in si.GetAllOrientations())
-                    {
-                        // Get pairs of beacons that matched
-                        var p0 = Tuple.Create(s0.GetIndex(i0.Item1), s0.GetIndex(i0.Item2));
-                        var po = Tuple.Create(so.GetIndex(ii.Item1), so.GetIndex(ii.Item2));
-
-                        // Get possible translations from pair i to pair 0
-                        var translations = new List<Beacon>();
-                        translations.Add(po.Item1.Subtract(p0.Item1));
-                        translations.Add(po.Item1.Subtract(p0.Item2));
-                        translations.Add(p0.Item1.Subtract(po.Item1));
-                        translations.Add(p0.Item1.Subtract(po.Item2));
-
-                        foreach (var translation in translations)
-                        {
-                            var ti = so.ApplyTranslation(translation);
-
-                            // Find beacons that match and consider the orientation a match
-                            // When there are at least 12 matching beacons
-                            var matchingBeacons = s0.GetMatchingBeacons(ti);
-
-                            if (matchingBeacons.Count >= Math.Min(ti.Count(), 12))
-                            {
-                                match = ti;
-                                break;
-                            }
-                        }
-
-                        if (match != null) { break; }
-                    }
-
-                    // If match was found, add beacons from match to scanner 0
-                    if (match != null)
-                    {
-                        scannerCheckCount = 0;
-
-                        for (int j = 0; j < match.Count(); j++)
-                        {
-                            s0.AddBeacon(match.GetIndex(j));
-                        }
-                    }
-                    // Else add scanner to back of queue
-                    else
-                    {
-                        scanners.Enqueue(si);
-                    }
-                }
-                // Else add scanner to back of queue
-                else
-                {
-                    scanners.Enqueue(si);
-                }
-
             }
 
-            return s0.Count().ToString();
+            // Iterate until no scanner pairs remain
+            while (scannerPairSimilarity.TryDequeue(out Tuple<Scanner, Scanner> pair, out int similarity))
+            {
+                // Extract next most similar scanners from the PQ
+                var scannerA = pair.Item1;
+                var scannerB = pair.Item2;
+                bool foundMatch = false;
+
+                // Check both scanners still exist in the list
+                if (!scanners.Contains(scannerA) || !scanners.Contains(scannerB))
+                {
+                    continue;
+                }
+
+                // Verify the two scanners still have the same similarity
+                var newSimilarity = 500 - scannerA.SimilarityTo(scannerB);
+                if (similarity != newSimilarity)
+                {
+                    // Add back into PQ with updated similarity score
+                    scannerPairSimilarity.Enqueue(Tuple.Create(scannerA, scannerB), newSimilarity);
+                    continue;
+                }
+
+                // Find any pair of matching beacons that are in both scanners
+                var beaconPairs = scannerA.FindMatchingBeacons(scannerB);
+                if (beaconPairs.Count >= 66)
+                {
+                    // For each possible pair of matching beacons
+                    foreach (var beaconPair in beaconPairs)
+                    {
+                        // If a match was found on previous look, exit
+                        if (foundMatch) { break; }
+
+                        // Extract indexes of beacon pairs
+                        var sA1 = beaconPair.Item1.Item1;
+                        var sA2 = beaconPair.Item1.Item2;
+                        var sB1 = beaconPair.Item2.Item1;
+                        var sB2 = beaconPair.Item2.Item2;
+
+                        // Select either scanner to make variations as long as its not scanner 0
+                        Scanner fixedScanner;
+                        Scanner variationsScanner;
+                        Tuple<Position, Position> fixedBeacons;
+                        Tuple<int, int> variationsBeacons;
+
+                        // If scanner A is the fixed scanner
+                        if (scannerA.index == 0)
+                        {
+                            fixedScanner = scannerA;
+                            variationsScanner = scannerB;
+                            fixedBeacons = Tuple.Create(scannerA.beacons[sA1], scannerA.beacons[sA2]);
+                            variationsBeacons = Tuple.Create(sB1, sB2);
+                        }
+                        // Else scanner B is the fixed scanner
+                        else
+                        {
+                            fixedScanner = scannerB;
+                            variationsScanner = scannerA;
+                            fixedBeacons = Tuple.Create(scannerB.beacons[sB1], scannerB.beacons[sB2]);
+                            variationsBeacons = Tuple.Create(sA1, sA2);
+                        }
+
+                        // Generate all orientations and translations until match is found
+                        foreach (var variation in variationsScanner.GenerateVariations(fixedBeacons, variationsBeacons))
+                        {
+                            // If a match was found on previous look, exit
+                            if (foundMatch) { break; }
+
+                            // If number of matches is greater than 12, we have a matching scanner
+                            var matches = fixedScanner.CountMatches(variation);
+                            if (matches >= Math.Min(12, fixedScanner.beacons.Count))
+                            {
+                                // Assign all beacons to the fixed scanner
+                                foreach (var beacon in variation.beacons)
+                                {
+                                    if (!fixedScanner.beacons.Contains(beacon))
+                                    {
+                                        fixedScanner.beacons.Add(beacon);
+                                    }
+                                }
+
+                                // Tell fixed scanner where the variations scanner was
+                                // as well as all scanners they knew the positions of
+                                fixedScanner.scanners.Add(variation.position);
+                                fixedScanner.scanners.AddRange(variation.scanners);
+
+                                // Generate new fingerprint for the fixed scanner
+                                fixedScanner.GenerateFingerprint();
+
+                                // Remove variations scanner from list
+                                scanners.Remove(variationsScanner);
+
+                                // Generate similarity scores with every other scanner
+                                foreach (var otherScanner in scanners)
+                                {
+                                    if (!fixedScanner.Equals(otherScanner))
+                                    {
+                                        // Using "500 - similarity" because PQ sort by min to max
+                                        var updatedSimilarity = 500 - fixedScanner.SimilarityTo(otherScanner);
+                                        scannerPairSimilarity.Enqueue(Tuple.Create(fixedScanner, otherScanner), updatedSimilarity);
+                                    }
+                                }
+
+                                // Exit for loops
+                                foundMatch = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Should be one scanner remaining
+            return scanners[0];
         }
 
-        static string PartTwo(Queue<Scanner> scanners)
+        static string PartOne(Scanner scanner)
         {
-            return "";
+            // Return number of beacons in the only scanner remaining
+            return scanner.beacons.Count.ToString();
+        }
+
+        static string PartTwo(Scanner scanner)
+        {
+            // Add all scanner locations into single list
+            var locations = new List<Position>() { scanner.position };
+            locations.AddRange(scanner.scanners);
+
+            // Calculate manhatten distance for each pair
+            var largestManhatten = 0;
+
+            for (int i = 0; i < locations.Count - 1; i++)
+            {
+                for (int j = i; j < locations.Count; j++)
+                {
+                    var manhatten = locations[i].ManhattenTo(locations[j]);
+                    if (manhatten > largestManhatten)
+                    {
+                        largestManhatten = manhatten;
+                    }
+                }
+            }
+
+            return largestManhatten.ToString();
         }
     }
 
-    class Beacon
+    class Position
     {
-        private int _x;
-        private int _y;
-        private int _z;
+        public int x;
+        public int y;
+        public int z;
 
-        public Beacon(int x, int y, int z)
+        public Position(int X, int Y, int Z)
         {
-            _x = x;
-            _y = y;
-            _z = z;
+            x = X;
+            y = Y;
+            z = Z;
         }
 
-        public int X() { return _x; }
-        public int Y() { return _y; }
-        public int Z() { return _z; }
-
-        public Tuple<int, int, int> Get()
-        {
-            return Tuple.Create(_x, _y, _z);
-        }
-
-        public Beacon Subtract(Beacon b)
-        {
-            return new Beacon(X() - b.X(), Y() - b.Y(), Z() - b.Z());
-        }
-
-        public Beacon Translate(int x, int y, int z)
-        {
-            return new Beacon(X() + x, Y() + y, Z() + z);
-        }
-
-        public double DistanceTo(Beacon b)
-        {
-            return Math.Sqrt(
-                Math.Pow(Math.Abs(X() - b.X()), 2) + 
-                Math.Pow(Math.Abs(Y() - b.Y()), 2) + 
-                Math.Pow(Math.Abs(Z() - b.Z()), 2)
-            );
-        }
-
-        public bool Equals(Beacon other)
+        public bool Equals(Position other)
         {
             if (ReferenceEquals(other, null))
             {
@@ -197,132 +227,234 @@ namespace AdventOfCode2021
                 return true;
             }
 
-            return X().Equals(other.X())
-                   && Y().Equals(other.Y())
-                   && Z().Equals(other.Z());
+            return x == other.x && 
+                y == other.y && 
+                z == other.z;
         }
 
         public override bool Equals(object obj)
         {
-            return Equals(obj as Beacon);
+            return Equals(obj as Position);
         }
 
         public override string ToString()
         {
-            return X().ToString() + ", " + Y().ToString() + ", " + Z().ToString();
+            return x + ", " + y + ", " + z;
+        }
+
+        public Position Add(Position o)
+        {
+            return new Position(
+                x + o.x,
+                y + o.y,
+                z + o.z
+            );
+        }
+
+        public Position Subtract(Position o)
+        {
+            return new Position(
+                x - o.x,
+                y - o.y,
+                z - o.z
+            );
+        }
+
+        public double DistanceTo(Position o)
+        {
+            return Math.Sqrt(
+                Math.Pow(Math.Abs(x - o.x), 2) +
+                Math.Pow(Math.Abs(y - o.y), 2) +
+                Math.Pow(Math.Abs(z - o.z), 2)
+            );
+        }
+
+        public int ManhattenTo(Position o)
+        {
+            return Math.Abs(x - o.x) + 
+                Math.Abs(y - o.y) + 
+                Math.Abs(z - o.z);
         }
     }
 
     class Scanner
     {
-        private List<Beacon> beacons;
+        public int index;
+        public Position position;
+        public List<Position> beacons;
+        public List<Position> scanners;
+        public Dictionary<double, Tuple<int, int>> fingerprint;
 
-        public Scanner()
+        public Scanner(int i = 0)
         {
-            beacons = new List<Beacon>();
+            index = i;
+            position = new Position(0, 0, 0);
+            beacons = new List<Position>();
+            scanners = new List<Position>();
+            fingerprint = new Dictionary<double, Tuple<int, int>>();
         }
 
-        public void AddBeacon(Beacon b)
+        public bool Equals(Scanner other)
         {
-            if (!Contains(b))
+            if (ReferenceEquals(other, null))
             {
-                beacons.Add(b);
+                return false;
             }
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return index == other.index;
         }
 
-        public Beacon GetIndex(int index)
+        public override bool Equals(object obj)
         {
-            return beacons[index];
+            return Equals(obj as Scanner);
         }
 
-        public int Count()
+        public override string ToString()
         {
-            return beacons.Count;
+            return index + ", Count=" + beacons.Count;
         }
 
-        public bool Contains(Beacon b)
+        public void GenerateFingerprint()
         {
-            return beacons.Contains(b);
-        }
+            fingerprint = new Dictionary<double, Tuple<int, int>>();
 
-        public List<Beacon> GetMatchingBeacons(Scanner other)
-        {
-            return beacons.FindAll(b => other.Contains(b)).ToList();
-        }
-
-        public Dictionary<double, Tuple<int, int>> GetDistancesPairs(int maxDistance)
-        {
-            var result = new Dictionary<double, Tuple<int, int>>();
-
-            for (int i = 0; i < beacons.Count; i++)
+            for (int i = 0; i < beacons.Count - 1; i++)
             {
                 for (int j = i + 1; j < beacons.Count; j++)
                 {
-                    var distance = beacons[i].DistanceTo(beacons[j]);
+                    var d = beacons[i].DistanceTo(beacons[j]);
 
-                    if (distance > 0 && distance < maxDistance && !result.ContainsKey(distance))
-                    {
-                        result.Add(distance, Tuple.Create(i, j));
+                    if (fingerprint.ContainsKey(d)) { 
+                        continue; 
                     }
+
+                    fingerprint.Add(d, Tuple.Create(i, j));
+                }
+            }
+        }
+
+        public int SimilarityTo(Scanner o)
+        {
+            int count = 0;
+
+            foreach (var distance in fingerprint.Keys)
+            {
+                if (o.fingerprint.ContainsKey(distance))
+                {
+                    count += 1;
                 }
             }
 
-            return result;
+            return count;
         }
 
-        public Scanner ApplyTranslation(Beacon t)
+        public List<Tuple<Tuple<int, int>, Tuple<int, int>>> FindMatchingBeacons(Scanner o)
         {
-            Scanner translated = new Scanner();
+            var matchingBeacons = new List<Tuple<Tuple<int, int>, Tuple<int, int>>>();
 
-            foreach(var beacon in beacons)
+            foreach(var distance in fingerprint.Keys)
             {
-                translated.AddBeacon(beacon.Translate(t.X(), t.Y(), t.Z()));
+                if (o.fingerprint.ContainsKey(distance))
+                {
+                    matchingBeacons.Add(
+                        Tuple.Create(
+                            fingerprint[distance],
+                            o.fingerprint[distance]
+                        )
+                    );
+                }
             }
 
-            return translated;
+            return matchingBeacons;
         }
 
-        public List<Scanner> GetAllOrientations()
+        public List<Scanner> GenerateVariations(Tuple<Position, Position> fixedBeacons, Tuple<int, int> variationBeacons)
         {
-            var orientations = new List<Scanner>();
+            // Create and initialise orientation variation scanners
+            var oriVariations = new List<Scanner>();
             for (int i = 0; i < 24; i++)
             {
-                orientations.Add(new Scanner());
+                oriVariations.Add(new Scanner(index));
             }
 
+            // For each beacon in this scanner
             foreach (var beacon in beacons)
             {
-                var x = beacon.X();
-                var y = beacon.Y();
-                var z = beacon.Z();
+                var x = beacon.x;
+                var y = beacon.y;
+                var z = beacon.z;
 
-                orientations[0].AddBeacon(new Beacon(x, y, z));
-                orientations[1].AddBeacon(new Beacon(-y, x, z));
-                orientations[2].AddBeacon(new Beacon(-x, -y, z));
-                orientations[3].AddBeacon(new Beacon(y, -x, z));
-                orientations[4].AddBeacon(new Beacon(-z, y, x));
-                orientations[5].AddBeacon(new Beacon(-y, -z, x));
-                orientations[6].AddBeacon(new Beacon(z, -y, x));
-                orientations[7].AddBeacon(new Beacon(y, z, x));
-                orientations[8].AddBeacon(new Beacon(-x, y, -z));
-                orientations[9].AddBeacon(new Beacon(-y, -x, -z));
-                orientations[10].AddBeacon(new Beacon(x, -y, -z));
-                orientations[11].AddBeacon(new Beacon(y, x, -z));
-                orientations[12].AddBeacon(new Beacon(z, y, -x));
-                orientations[13].AddBeacon(new Beacon(-y, z, -x));
-                orientations[14].AddBeacon(new Beacon(-z, -y, -x));
-                orientations[15].AddBeacon(new Beacon(y, -z, -x));
-                orientations[16].AddBeacon(new Beacon(x, -z, y));
-                orientations[17].AddBeacon(new Beacon(z, x, y));
-                orientations[18].AddBeacon(new Beacon(-x, z, y));
-                orientations[19].AddBeacon(new Beacon(-z, -x, y));
-                orientations[20].AddBeacon(new Beacon(x, z, -y));
-                orientations[21].AddBeacon(new Beacon(-z, x, -y));
-                orientations[22].AddBeacon(new Beacon(-x, -z, -y));
-                orientations[23].AddBeacon(new Beacon(z, -x, -y));
+                // Apply orientations
+                oriVariations[0].beacons.Add(new Position(x, y, z));
+                oriVariations[1].beacons.Add(new Position(-y, x, z));
+                oriVariations[2].beacons.Add(new Position(-x, -y, z));
+                oriVariations[3].beacons.Add(new Position(y, -x, z));
+                oriVariations[4].beacons.Add(new Position(-z, y, x));
+                oriVariations[5].beacons.Add(new Position(-y, -z, x));
+                oriVariations[6].beacons.Add(new Position(z, -y, x));
+                oriVariations[7].beacons.Add(new Position(y, z, x));
+                oriVariations[8].beacons.Add(new Position(-x, y, -z));
+                oriVariations[9].beacons.Add(new Position(-y, -x, -z));
+                oriVariations[10].beacons.Add(new Position(x, -y, -z));
+                oriVariations[11].beacons.Add(new Position(y, x, -z));
+                oriVariations[12].beacons.Add(new Position(z, y, -x));
+                oriVariations[13].beacons.Add(new Position(-y, z, -x));
+                oriVariations[14].beacons.Add(new Position(-z, -y, -x));
+                oriVariations[15].beacons.Add(new Position(y, -z, -x));
+                oriVariations[16].beacons.Add(new Position(x, -z, y));
+                oriVariations[17].beacons.Add(new Position(z, x, y));
+                oriVariations[18].beacons.Add(new Position(-x, z, y));
+                oriVariations[19].beacons.Add(new Position(-z, -x, y));
+                oriVariations[20].beacons.Add(new Position(x, z, -y));
+                oriVariations[21].beacons.Add(new Position(-z, x, -y));
+                oriVariations[22].beacons.Add(new Position(-x, -z, -y));
+                oriVariations[23].beacons.Add(new Position(z, -x, -y));
             }
 
-            return orientations.ToList();
+            // Create transition variations
+            var variations = new List<Scanner>();
+
+            // For each orientation scanner
+            foreach (var orientation in oriVariations)
+            {
+                // Calculate the translation required to move to fixed beacon positions
+                var beaconA1 = fixedBeacons.Item1;
+                var beaconA2 = fixedBeacons.Item2;
+                var beaconB1 = orientation.beacons[variationBeacons.Item1];
+                var beaconB2 = orientation.beacons[variationBeacons.Item2];
+
+                // Generate all translations
+                var translations = new List<Position>();
+                translations.Add(beaconA1.Subtract(beaconB1));
+                translations.Add(beaconA2.Subtract(beaconB2));
+                translations.Add(beaconB1.Subtract(beaconA1));
+                translations.Add(beaconB2.Subtract(beaconA2));
+
+                // For each translation
+                foreach (var translation in translations)
+                {
+                    // Set position of translation
+                    var traVariation = new Scanner(index);
+                    traVariation.position = translation;
+
+                    // Translate all beacons
+                    traVariation.beacons = orientation.beacons.Select(b => b.Add(translation)).ToList();
+
+                    // Add to variations list
+                    variations.Add(traVariation);
+                }
+            }
+
+            return variations;
+        }
+
+        public int CountMatches(Scanner o)
+        {
+            return beacons.FindAll(b => o.beacons.Contains(b)).Count;
         }
     }
 
