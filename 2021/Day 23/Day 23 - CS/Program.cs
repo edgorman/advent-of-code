@@ -6,15 +6,15 @@ namespace AdventOfCode2021
         static void Main(string[] args)
         {
             // Get input from txt file
-            string[] lines = System.IO.File.ReadAllLines("test.txt");
+            string[] lines = System.IO.File.ReadAllLines("input.txt");
 
             // Clean input
             var amphipods = new List<Amphipod>();
-            for (int x = 3; x < 10; x += 2)
+            for (int y = 1; y < lines.Length; y++)
             {
-                for (int y = 2; y < 4; y++)
+                for (int x = 1; x < lines[y].Length; x++)
                 {
-                    if (lines[y][x] != '.')
+                    if (new char[] { 'A', 'B', 'C', 'D' }.Contains(lines[y][x]))
                     {
                         amphipods.Add(
                             new Amphipod(
@@ -31,56 +31,74 @@ namespace AdventOfCode2021
             // Part 1
             Console.WriteLine(PartOne(start));
 
+            var newLines = new string[lines.Length + 2];
+            newLines[0] = lines[0];
+            newLines[1] = lines[1];
+            newLines[2] = lines[2];
+            newLines[3] = "  #D#C#B#A#";
+            newLines[4] = "  #D#B#A#C#";
+            newLines[5] = lines[3];
+            newLines[6] = lines[4];
+
+            var newAphipods = new List<Amphipod>();
+            for (int y = 1; y < newLines.Length; y++)
+            {
+                for (int x = 1; x < newLines[y].Length; x++)
+                {
+                    if (new char[] { 'A', 'B', 'C', 'D' }.Contains(newLines[y][x]))
+                    {
+                        newAphipods.Add(
+                            new Amphipod(
+                                newLines[y][x],
+                                x,
+                                y
+                            )
+                        );
+                    }
+                }
+            }
+            var newStart = new State(newLines, 0, newAphipods);
+
             // Part 2
-            Console.WriteLine(PartTwo(start));
+            Console.WriteLine(PartOne(newStart));
         }
 
         static string PartOne(State start)
         {
-            // Store states in priority queue sorted by energy heuristic
+            // Initialise priority queue of states and energy estimates
             var states = new PriorityQueue<State, int>();
-            states.Enqueue(start, start.energy);
+            states.Enqueue(start, 0);
 
-            // Store list of visited states in set of hashcodes
-            var history = new HashSet<int>();
-            int lastEstimate = 0;
+            // Initialise hashset of previously visited states by hashcode
+            var history = new HashSet<int>() { start.GetHashCode() };
 
-            // Try the next state with lowest energy cost
-            while (states.TryDequeue(out State next, out int estimate))
+            // While there are states remaining
+            while (states.TryDequeue(out State nextState, out int nextPriority))
             {
-                // Check if state is complete
-                if (next.isDone())
+                // Check if next state is end state
+                if (nextState.IsDone())
                 {
-                    return next.energy.ToString();
+                    return nextState.energy.ToString();
                 }
 
-                // Add next state to list of visited states
-                history.Add(next.GetHashCode());
-
-                if (lastEstimate != estimate)
+                // For each possible state/priority reachable from next state
+                foreach (var statePriority in nextState.GenerateNewStates())
                 {
-                    Console.WriteLine(next.energy.ToString() + " - " + estimate.ToString());
-                    lastEstimate = estimate;
-                }
+                    var newState = statePriority.Item1;
+                    var newPriority = statePriority.Item2;
 
-                // Generate possible states
-                foreach (var pair in next.GenerateStates())
-                {
-                    // If state has not been visited before
-                    if (!history.Contains(pair.Item1.GetHashCode()))
+                    // If this new state has been seen before
+                    if (newState.IsDone() || !history.Contains(newState.GetHashCode()))
                     {
-                        states.Enqueue(pair.Item1, pair.Item2);
+                        // Insert state into priority queue and hashset
+                        states.Enqueue(newState, newPriority);
+                        history.Add(newState.GetHashCode());
                     }
-                }
+                }    
             }
-
-            // Couldn't find a state that finished
-            return "-1";
-        }
-
-        static string PartTwo(State start)
-        {
-            return "";
+            
+            // Return start state energy
+            return start.energy.ToString();
         }
     }
 
@@ -139,7 +157,7 @@ namespace AdventOfCode2021
 
         public override int GetHashCode()
         {
-            return type ^ x.GetHashCode() ^ y.GetHashCode();
+            return ToString().GetHashCode();
         }
     }
 
@@ -148,6 +166,14 @@ namespace AdventOfCode2021
         public string[] map;
         public int energy;
         public List<Amphipod> amphipods;
+        public State previous;
+
+        public State()
+        {
+            map = new string[0];
+            energy = 0;
+            amphipods = new List<Amphipod>();
+        }
 
         public State(string[] m, int e, List<Amphipod> a)
         {
@@ -156,92 +182,108 @@ namespace AdventOfCode2021
             amphipods = a;
         }
 
-        public bool isDone()
+        public bool IsDone()
         {
-            // For each amphipod
             foreach (var a in amphipods)
             {
-                // If they are not home
-                if (a.x != a.home)
+                if (!IsAmphipodDone(a))
                 {
                     return false;
                 }
             }
 
-            // All are home
             return true;
         }
 
-        public List<Tuple<State, int>> GenerateStates()
+        public bool IsAmphipodDone(Amphipod a)
+        {
+            // If amphipod is not home, return false
+            if (a.x != a.home)
+            {
+                return false;
+            }
+
+            // If blocking amphipod of another type beneathm return false
+            for (int y = a.y; y < map.Length - 1; y++)
+            {
+                if (map[y][a.x] != a.type)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public bool IsAmphipodStuck(Amphipod a)
+        {
+            // If amphipod in hallway, return false
+            if (a.y == 1)
+            {
+                return false;
+            }
+
+            // If amphipod has anything other than empty above it, return true
+            for (int y = a.y - 1; y >= 1; y--)
+            {
+                if (map[y][a.x] != '.')
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public List<Tuple<State, int>> GenerateNewStates()
         {
             var newStates = new List<Tuple<State, int>>();
+            var roomEntrance = new int[] { 3, 5, 7, 9 };
 
             // For each amphipod
             foreach (var a in amphipods)
             {
-                // Generate possible moves for this amphipod
-                var newPositions = new List<Tuple<int, int>>();
-                
-                // If amphipod is home
-                if (IsHome(a))
-                {
-                    // If amphipod is blocking another type
-                    if (IsBlockingAnotherType(a))
-                    {
-                        // Generate all valid moves to hallway
-                        for (int x = 1; x < 12; x++)
-                        {
-                            newPositions.Add(Tuple.Create(x, 1));
-                        }
-                    }
-                    // Else amphipod has no move to make this round
-                    else
-                    {
-                        continue;
-                    }
-                }
-                // Else if amphipod is in hallway or can move to hallway
-                else if (IsInHallway(a) || CanReachHallway(a))
-                {
-                    // If amphipod can reach their home and it is not occupied by another type
-                    if (CanReachX(a, a.home) && IsHomeAvailable(a))
-                    {
-                        // If same type is already home
-                        if (IsLowerHomeAvailable(a))
-                        {
-                            // Move to lower position
-                            newPositions.Add(Tuple.Create(a.home, 3));
-                        }
-                        else
-                        {
-                            // Move to upper position
-                            newPositions.Add(Tuple.Create(a.home, 2));
-                        }
-                    }
-                    // Else move to other available positions in hallway
-                    else
-                    {
-                        // Generate all valid moves to hallway
-                        for (int x = 1; x < 12; x++)
-                        {
-                            newPositions.Add(Tuple.Create(x, 1));
-                        }
-                    }
-                }
-                // Else this amphipod is blocked and has no valid moves
-                else
+                // Check if it's home and not blocking another type
+                if (IsAmphipodDone(a))
                 {
                     continue;
                 }
 
-                // Generate states from possible moves
-                foreach (var p in newPositions)
+                // Check if it's stuck in a room behing another type
+                if (IsAmphipodStuck(a))
                 {
-                    var count = CanMove(a, p.Item1, p.Item2);
+                    continue;
+                }
 
-                    if (count != -1)
+                // For each possible position in map
+                for (int y = 1; y < map.Length - 1; y++)
+                {
+                    for (int x = 1; x < map[y].Length; x++)
                     {
-                        newStates.Add(Move(a, p.Item1, p.Item2, count));
+                        // Filter positions that are:
+                        //  empty,
+                        //  not outside a room,
+                        //  rooms that are not home
+                        if (map[y][x] == '.' && (
+                            (y == 1 && !roomEntrance.Contains(x)) ||
+                            (y > 1 && x == a.home)
+                           ))
+                        {
+                            var statePriority = TryMove(a, x, y);
+                            var state = statePriority.Item1;
+                            var priority = statePriority.Item2;
+
+                            // if priority is -1, skip
+                            if (priority == -1)
+                            {
+                                continue;
+                            }
+                            // Else add state priority to list
+                            else
+                            {
+                                newStates.Add(statePriority);
+                            }
+                        }
                     }
                 }
             }
@@ -249,136 +291,81 @@ namespace AdventOfCode2021
             return newStates;
         }
 
-        public bool IsHome(Amphipod a)
-        {
-            return a.home == a.x;
-        }
-
-        public bool IsBlockingAnotherType(Amphipod a)
-        {
-            return a.y == 2 || a.type != map[3][a.x];
-        }
-
-        public bool IsInHallway(Amphipod a)
-        {
-            return a.y == 1;
-        }
-
-        public bool CanReachHallway(Amphipod a)
-        {
-            return a.y != 3 || map[2][a.x] == '.';
-        }
-
-        public bool CanReachX(Amphipod a, int destX)
-        {
-            int minX = Math.Min(a.x, destX);
-            int maxX = Math.Min(a.x, destX);
-
-            for (int x = minX; x < maxX; x++)
-            {
-                if (map[a.y][x] != '.')
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        public bool IsHomeAvailable(Amphipod a)
-        {
-            if (!new char[] {'.', a.type}.Contains(map[3][a.home])) { return false; }
-            if (!new char[] { '.', a.type }.Contains(map[2][a.home])) { return false; }
-            return true;
-        }
-
-        public bool IsLowerHomeAvailable(Amphipod a)
-        {
-            return map[3][a.home] == '.';
-        }
-
-        public int CanMove(Amphipod a, int destX, int destY)
+        public Tuple<State, int> TryMove(Amphipod a, int destX, int destY)
         {
             int count = 0;
             int startX = a.x;
             int startY = a.y;
 
-            // If destination is outside room in hallway
-            if (destY == 1 && new int[] {3, 5, 7, 9 }.Contains(destX)) { return -1; }
-
-            // If amphipod is in room but room is not destination
+            // If amphipod is in room that is not the destination, move amphipod up
             if (startY > 1 && startX != destX)
             {
-                // Move amphipod up to hallway
-                for (int y = startY - 1; y >= 1; y--)
+                for (int y = startY; y > 0; y--)
                 {
-                    if (map[y][startX] != '.') { return -1; }
-                    count++;
+                    if (y != startY)
+                    {
+                        if (map[y][startX] != '.')
+                        {
+                            return Tuple.Create(new State(), -1);
+                        }
+
+                        count++;
+                    }
                 }
-
-                // Amphipod is now in hallway
-                startY = 1;
             }
+            startY = 1;
 
-            // If amphipod is not at the same x as destination
+            // If amphipod is not at their destination x, move amphipod along
             if (startX != destX)
             {
-                // Move amphipod along to destination x
-                int minX = Math.Min(startX, destX);
-                int maxX = Math.Max(startX, destX);
-                for (int x = minX; x <= maxX; x++)
+                for (int x = Math.Min(startX, destX); x <= Math.Max(startX, destX); x++)
                 {
-                    if (x == startX) { continue; }
-                    if (map[startY][x] != '.') { return -1; }
-                    count++;
-                }
-                startX = destX;
-            }
+                    if (x != startX)
+                    {
+                        if (map[1][x] != '.')
+                        {
+                            return Tuple.Create(new State(), -1);
+                        }
 
-            // If amphipod is moving into room
-            if (startY != destY)
+                        count++;
+                    }
+                }
+            }
+            startX = destX;
+
+            // If destination is in a room and currently above the room, move amphipod down
+            if (destY > 1 && startX == destX)
             {
-                // Move amphipod along to destination y
-                int minY = Math.Min(startY, destY);
-                int maxY = Math.Max(startY, destY);
-                for (int y = minY + 1; y <= maxY; y++)
+                for (int y = startY; y <= destY; y++)
                 {
-                    if (map[y][startX] != '.') { return -1; }
-                    count++;
+                    if (y != startY)
+                    {
+                        if (map[y][destX] != '.')
+                        {
+                            return Tuple.Create(new State(), -1);
+                        }
+
+                        count++;
+                    }
                 }
-                startY = destY;
             }
+            startY = destY;
 
-            // Sanity check, start should now equal end
-            if (startX != destX || startY != destY) { return -1; }
-
-            return count;
-        }
-
-        public Tuple<State, int> Move(Amphipod a, int x, int y, int count)
-        {
-            // Deep copy map and amphipods
+            // Amphipod is able to move to destination, create new state
             var newMap = new string[map.Length];
-            Array.Copy(map, newMap, map.Length);
+            var newEnergy = energy + count * a.GetCost();
             var newAmphipods = amphipods.ConvertAll(a => new Amphipod(a));
 
-            // Move amphipod to new position
+            Array.Copy(map, newMap, map.Length);
             newMap[a.y] = newMap[a.y].Remove(a.x, 1).Insert(a.x, ".");
-            newMap[y] = newMap[y].Remove(x, 1).Insert(x, a.type.ToString());
+            newMap[destY] = newMap[destY].Remove(destX, 1).Insert(destX, a.type.ToString());
+
             newAmphipods.Remove(a);
-            newAmphipods.Add(new Amphipod(a.type, x, y));
+            newAmphipods.Add(new Amphipod(a.type, destX, destY));
 
-            // Calculate new cost and estimate to end
-            var newEnergy = energy + a.GetCost() * count;
-            var energyEstimate = newEnergy;
-            //foreach (var b in newAmphipods)
-            //{
-            //    var countb = CanMove(b, b.home, 3);
-            //    energyEstimate += (countb == -1 ? 10 : countb) * b.GetCost();
-            //}
-
-            // Return new state and new energy
-            return Tuple.Create(new State(newMap, newEnergy, newAmphipods), energyEstimate);
+            var newState = new State(newMap, newEnergy, newAmphipods);
+            newState.previous = this;
+            return Tuple.Create(newState, newEnergy);
         }
 
         public override string ToString()
@@ -387,7 +374,10 @@ namespace AdventOfCode2021
 
             foreach(var a in amphipods)
             {
-                str += a.ToString() + ", ";
+                if (!IsAmphipodDone(a))
+                {
+                    str += a.ToString();
+                }
             }
 
             return str;
@@ -419,7 +409,14 @@ namespace AdventOfCode2021
 
         public override int GetHashCode()
         {
-            return ToString().GetHashCode();
+            var hashCode = 13;
+
+            foreach (var a in amphipods)
+            {
+                hashCode *= 13 + a.GetHashCode();
+            }
+
+            return hashCode;
         }
     }
 
