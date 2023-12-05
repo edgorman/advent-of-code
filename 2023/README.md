@@ -10,5 +10,6 @@ Run the following:
 mkdir Day_x
 cd Day_x
 go mod init Advent-of-Code/2023/Day_x
+touch main.go
 go mod tidy
 ```
