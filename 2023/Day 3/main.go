@@ -11,20 +11,20 @@ import (
 )
 
 func main() {
-	// Read document from local file
-	document, err := os.ReadFile("input.txt")
+	// Read input from local file
+	input, err := os.ReadFile("input.txt")
 	if err != nil {
-		fmt.Println("Could not read document")
+		fmt.Println("Could not read input")
 	}
-	schematic_lines_list := strings.Split(string(document), "\n")
+	schematic_lines_list := strings.Split(string(input), "\n")
 
 	// Part 1
-	part1 := part1(schematic_lines_list)
-	fmt.Println("Part 1", part1)
+	part_1_result := part_1(schematic_lines_list)
+	fmt.Println("Part 1", part_1_result)
 
 	// Part 2
-	part2 := part2(schematic_lines_list)
-	fmt.Println("Part 2", part2)
+	part_2_result := part_2(schematic_lines_list)
+	fmt.Println("Part 2", part_2_result)
 }
 
 type position struct {
@@ -39,7 +39,7 @@ func is_number(character byte) bool {
 	return false
 }
 
-func part1(schematic_lines_list []string) int {
+func part_1(schematic_lines_list []string) int {
 	// Store positions of symbols in slice
 	symbol_regexp := regexp.MustCompile(`[^a-zA-Z0-9.\n]+`)
 	symbol_positions := make([]position, 0)
@@ -98,7 +98,7 @@ func part1(schematic_lines_list []string) int {
 	return part_numbers_sum
 }
 
-func part2(schematic_lines_list []string) int {
+func part_2(schematic_lines_list []string) int {
 	// Store positions of gears in slice
 	symbol_regexp := regexp.MustCompile(`(\*)`)
 	symbol_positions := make([]position, 0)

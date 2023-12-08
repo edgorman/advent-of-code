@@ -9,22 +9,22 @@ import (
 
 func main() {
 	// Read document from local file
-	document, err := os.ReadFile("input.txt")
+	input, err := os.ReadFile("input.txt")
 	if err != nil {
-		fmt.Println("Could not read document")
+		fmt.Println("Could not read input")
 	}
-	calibration_list := strings.Split(string(document), "\n")
+	calibration_list := strings.Split(string(input), "\n")
 
 	// Part 1
-	part1 := part1(calibration_list)
-	fmt.Println("Part 1", part1)
+	part_1_result := part_1(calibration_list)
+	fmt.Println("Part 1", part_1_result)
 
 	// Part 2
-	part2 := part2(calibration_list)
-	fmt.Println("Part 2", part2)
+	part_2_result := part_2(calibration_list)
+	fmt.Println("Part 2", part_2_result)
 }
 
-func part1(calibration_list []string) int {
+func part_1(calibration_list []string) int {
 	calibration_sum := 0
 	for calibation_idx := 0; calibation_idx < len(calibration_list); calibation_idx++ {
 
@@ -59,7 +59,7 @@ func part1(calibration_list []string) int {
 	return calibration_sum
 }
 
-func part2(calibration_list []string) int {
+func part_2(calibration_list []string) int {
 	calibration_sum := 0
 	for calibation_idx := 0; calibation_idx < len(calibration_list); calibation_idx++ {
 

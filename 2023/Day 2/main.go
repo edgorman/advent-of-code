@@ -10,11 +10,11 @@ import (
 
 func main() {
 	// Read document from local file
-	document, err := os.ReadFile("input.txt")
+	input, err := os.ReadFile("input.txt")
 	if err != nil {
-		fmt.Println("Could not read document")
+		fmt.Println("Could not read input")
 	}
-	game_strings_list := strings.Split(string(document), "\n")
+	game_strings_list := strings.Split(string(input), "\n")
 
 	// Parse games
 	games_list := make([]game, len(game_strings_list))
@@ -26,12 +26,12 @@ func main() {
 
 	// Part 1
 	max_red, max_green, max_blue := 12, 13, 14
-	part1 := part1(games_list, max_red, max_green, max_blue)
-	fmt.Println("Part 1", part1)
+	part_1_result := part_1(games_list, max_red, max_green, max_blue)
+	fmt.Println("Part 1", part_1_result)
 
 	// Part 2
-	part2 := part2(games_list)
-	fmt.Println("Part 2", part2)
+	part_2_result := part_2(games_list)
+	fmt.Println("Part 2", part_2_result)
 }
 
 type set struct {
@@ -90,7 +90,7 @@ func parse_game(game_content string) game {
 	}
 }
 
-func part1(games_list []game, max_red int, max_green int, max_blue int) int {
+func part_1(games_list []game, max_red int, max_green int, max_blue int) int {
 	total_index_sum := 0
 	impossible_index_sum := 0
 
@@ -114,7 +114,7 @@ func part1(games_list []game, max_red int, max_green int, max_blue int) int {
 	return possible_index_sum
 }
 
-func part2(games_list []game) int {
+func part_2(games_list []game) int {
 	sum_game_power := 0
 
 	for i := 0; i < len(games_list); i++ {

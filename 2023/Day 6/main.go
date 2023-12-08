@@ -10,18 +10,18 @@ import (
 )
 
 func main() {
-	// Read document from local file
-	document, err := os.ReadFile("input.txt")
+	// Read input from local file
+	input, err := os.ReadFile("input.txt")
 	if err != nil {
-		fmt.Println("Could not read document")
+		fmt.Println("Could not read input")
 	}
 
-	// Parse the races from document
-	race_list := parse_races(strings.Split(string(document), "\n"))
+	// Parse the races from input
+	race_list := parse_races(strings.Split(string(input), "\n"))
 
 	// Part 1
-	part_1 := part1(race_list)
-	fmt.Println("Part 1", part_1)
+	part_1_result := part_1(race_list)
+	fmt.Println("Part 1", part_1_result)
 
 	// Update race list so it's one race
 	time_string := ""
@@ -34,8 +34,8 @@ func main() {
 	distance, _ := strconv.Atoi(distance_string)
 
 	// Part 2
-	part_2 := part1([]race{{time: time, distance: distance}})
-	fmt.Println("Part 2", part_2)
+	part_2_result := part_1([]race{{time: time, distance: distance}})
+	fmt.Println("Part 2", part_2_result)
 }
 
 type race struct {
@@ -73,7 +73,7 @@ func parse_races(lines []string) []race {
 	return race_list
 }
 
-func part1(race_list []race) int {
+func part_1(race_list []race) int {
 	// Treat each race like a quadratic equation, where:
 	// y= time*x - x^2 - distance
 	// Solve for y = 0 and round to whole number

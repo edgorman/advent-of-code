@@ -11,17 +11,17 @@ import (
 
 func main() {
 	// Read document from local file
-	document, err := os.ReadFile("input.txt")
+	input, err := os.ReadFile("input.txt")
 	if err != nil {
-		fmt.Println("Could not read document")
+		fmt.Println("Could not read input")
 	}
 
-	// Parse the document
-	seed_list, seed_mapping_list := parse_seeds(string(document))
+	// Parse the input
+	seed_list, seed_mapping_list := parse_seeds(string(input))
 
 	// Part 1
-	part_1 := part1(seed_list, seed_mapping_list)
-	fmt.Println("Part 1", part_1)
+	part_1_result := part_1(seed_list, seed_mapping_list)
+	fmt.Println("Part 1", part_1_result)
 
 	// Update seed ranges
 	for index := 0; index < len(seed_list)-1; index += 2 {
@@ -30,8 +30,8 @@ func main() {
 	}
 
 	// Part 2
-	part_2 := part1(seed_list, seed_mapping_list)
-	fmt.Println("Part 2", part_2)
+	part_2_result := part_1(seed_list, seed_mapping_list)
+	fmt.Println("Part 2", part_2_result)
 }
 
 type seed struct {
@@ -114,7 +114,7 @@ func parse_seeds(seed_input string) ([]seed, []seed_mapping) {
 	return seed_list, seed_mapping_list
 }
 
-func part1(seed_list []seed, seed_mapping_list []seed_mapping) int {
+func part_1(seed_list []seed, seed_mapping_list []seed_mapping) int {
 	lowest_seed_position := math.MaxInt
 
 	// For each seed

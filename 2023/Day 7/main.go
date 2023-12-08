@@ -20,16 +20,16 @@ func main() {
 
 	// Part 1
 	face_rankings := map[string]int{"A": 0, "K": 1, "Q": 2, "J": 3, "T": 4, "9": 5, "8": 6, "7": 7, "6": 8, "5": 9, "4": 10, "3": 11, "2": 12}
-	part_1 := part1(hand_list, face_rankings)
-	fmt.Println("Part 1", part_1)
+	part_1_result := part1(hand_list, face_rankings)
+	fmt.Println("Part 1", part_1_result)
 
 	// Update the hand ranking with jokers
 	hand_list = update_rankings(hand_list)
 
 	// Part 2
 	face_rankings["J"] = 13
-	part_2 := part1(hand_list, face_rankings)
-	fmt.Println("Part 2", part_2)
+	part_2_result := part1(hand_list, face_rankings)
+	fmt.Println("Part 2", part_2_result)
 }
 
 const (

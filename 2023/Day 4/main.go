@@ -19,12 +19,12 @@ func main() {
 	cards_list := parse_cards(card_lines_list)
 
 	// Part 1
-	part1 := part1(cards_list)
-	fmt.Println("Part 1", part1)
+	part_1_result := part_1(cards_list)
+	fmt.Println("Part 1", part_1_result)
 
 	// Part 2
-	part2 := part2(cards_list)
-	fmt.Println("Part 2", part2)
+	part_2_result := part_2(cards_list)
+	fmt.Println("Part 2", part_2_result)
 }
 
 type card struct {
@@ -80,7 +80,7 @@ func parse_cards(card_lines_list []string) []card {
 	return card_list
 }
 
-func part1(cards_list []card) int {
+func part_1(cards_list []card) int {
 	card_points_sum := 0
 
 	// For each card, calculate points
@@ -102,7 +102,7 @@ func part1(cards_list []card) int {
 	return card_points_sum
 }
 
-func part2(cards_list []card) int {
+func part_2(cards_list []card) int {
 	card_counts_sum := 0
 
 	// For each card, calculate points
